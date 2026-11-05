@@ -45,6 +45,21 @@ README.md         Setup and deploy notes
   - Deep links: `#region/realm/name`.
   - Recent searches are stored in localStorage.
 
+## Visual design (Nov 2026 revamp)
+- **Concept:** "a ledger of heroes".
+  - Square hairline panels with gilded corner brackets, built from CSS gradients.
+  - Dotted-leader fact rows, pointed (hexagonal) buttons, badges and chips, and a diamond sigil (`<symbol id="sigil">`) as the brand mark.
+- **Type:** Cormorant Garamond (display), Instrument Sans (body), IBM Plex Mono (labels). Tokens live in `:root`; the old names (`--sepia`, `--gold-bright`, etc.) are aliased because generated markup uses them inline.
+- **Interaction layer** (presentation only, in `enhanceResults()`):
+  - pointer spotlight on cards (`.spot`, `--mx/--my`)
+  - collapsible gear cards (click or Enter)
+  - section reveal and bar fill on scroll
+  - scrollspy on the sticky section nav
+  - region segmented control that drives the hidden `#region` select
+  - `/` focuses the name field
+  - API status pill (`setApiState`: checking / live / waiting / down)
+- Reduced-motion is respected. Layout verified with no horizontal scroll at 320, 390, 768, 1024 and 1440px.
+
 ## Worker (`worker/worker.js`)
 - **Routes:**
   - `GET /api/blizzard`: a read-only pass-through that adds the OAuth token. It returns Blizzard's status and body unchanged and caches successful replies (5 minutes for profiles, 1 hour for game data). If Blizzard returns 401, it gets a fresh token and retries once.
