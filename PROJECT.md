@@ -36,7 +36,7 @@ README.md         Setup and deploy notes
   - Endpoints that failed are listed under **Not Available**, and a **Raw JSON** panel offers copy and download.
 - **Requests:**
   - By default they go through the worker: `GET {worker}/api/blizzard?region=&path=&namespace=&locale=`.
-  - Optional fallback: the visitor enters their own Blizzard client ID and secret (or pastes a token), and the browser calls Blizzard directly.
+  - There is no way for visitors to use their own Blizzard credentials (removed on request). On load, the page deletes any `ll_creds` / `ll_token` / `ll_manual_token` an earlier version stored.
 - **Settings (Advanced, saved in localStorage):**
   - Worker URL (default `DEFAULT_WORKER_URL`).
   - Namespaces: `profile-forever-{region}` and `dynamic-forever-{region}`.
@@ -105,7 +105,7 @@ README.md         Setup and deploy notes
 
 ## Testing status
 - **Mock-tested only.** No real Forever character has been loaded yet.
-  - A Playwright run against mocked Blizzard and worker responses covered search, the multi-match picker, all sections, item icons, phone-width layout and the own-credentials fallback, with no page errors.
+  - A Playwright run against mocked Blizzard and worker responses covered search, the multi-match picker, all sections, item icons, and phone-width layout, with no page errors.
   - Worker unit tests (Node with stubbed `fetch` and `caches`) covered proxying, the allowlist, the bad host/path/namespace/region checks, the token retry, caching and the CORS origin check.
 - The real API response shapes for Forever are unknown. The first live run may need renderer tweaks, and the generic viewer and Raw JSON help with that.
 

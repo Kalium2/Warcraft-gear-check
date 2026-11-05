@@ -296,8 +296,6 @@ details.box .inner > .field-hint:first-child{margin-top:0;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media (max-width:560px){ .row2{grid-template-columns:1fr;} details.box .inner{padding-left:0;} }
 .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
-.cred-state{font-size:10px;letter-spacing:.14em;padding:3px 10px;color:var(--ok);border:1px solid rgba(127,199,154,.35);}
-.cred-state.no{color:var(--bad);border-color:rgba(224,122,106,.35);}
 
 /* status line */
 .status{
@@ -903,34 +901,6 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
       </form>
 
       <div class="drawers">
-        <details class="box" id="credsBox">
-          <summary>Use your own Blizzard API key <span class="cred-state ok" id="credState">using site API</span></summary>
-          <div class="inner">
-            <p class="field-hint">
-              Optional. Lookups normally go through this site's own API proxy. Fill these in only if it's down or rate-limited; your browser then calls Blizzard directly with your own free client from
-              <a href="https://develop.battle.net/access/clients" target="_blank" rel="noopener">develop.battle.net</a>.
-              Credentials go only to <code>oauth.battle.net</code> and stay in this tab unless you tick "remember".
-            </p>
-            <div class="row2" style="margin-top:16px">
-              <div class="fld"><label for="clientId">Client ID</label><input type="text" id="clientId" spellcheck="false"></div>
-              <div class="fld"><label for="clientSecret">Client secret</label><input type="password" id="clientSecret"></div>
-            </div>
-            <p class="field-hint">
-              <label style="cursor:pointer"><input type="checkbox" id="remember">Remember on this device</label>
-            </p>
-            <div class="fld" style="margin-top:16px">
-              <label for="manualToken">Or paste an access token</label>
-              <input type="password" id="manualToken" placeholder="Bearer token (optional)">
-            </div>
-            <p class="field-hint">If the browser blocks the token request, create one in a terminal (valid about 24h):<br>
-              <code>curl -u CLIENT_ID:CLIENT_SECRET -d grant_type=client_credentials https://oauth.battle.net/token</code></p>
-            <div class="btn-row">
-              <button type="button" class="ghost" id="testBtn">Test &amp; reload realms</button>
-              <button type="button" class="ghost" id="forgetBtn">Forget credentials</button>
-            </div>
-          </div>
-        </details>
-
         <details class="box">
           <summary>Advanced settings</summary>
           <div class="inner">
@@ -1067,8 +1037,6 @@ function sDel(store, k){ try{ window[store].removeItem(k); }catch(e){} }
 const $ = id => document.getElementById(id);
 const el = {
   form: $('searchForm'), region: $('region'), realm: $('realm'), name: $('charName'), btn: $('searchBtn'),
-  clientId: $('clientId'), clientSecret: $('clientSecret'), remember: $('remember'), manualToken: $('manualToken'),
-  credState: $('credState'), credsBox: $('credsBox'), testBtn: $('testBtn'), forgetBtn: $('forgetBtn'),
   nsProfile: $('nsProfile'), nsDynamic: $('nsDynamic'), locale: $('locale'), realmSlug: $('realmSlug'),
   resetNsBtn: $('resetNsBtn'), workerUrl: $('workerUrl'), nsMeta: $('nsMeta'), status: $('status'), results: $('results'), recent: $('recent')
 };
@@ -1103,7 +1071,7 @@ function workerUrl(){ return (el.workerUrl.value.trim() || DEFAULT_WORKER_URL).r
 function syncRegionSeg(){
   document.querySelectorAll('#regionSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === el.region.value)));
 }
-function updateNsMeta(){ syncRegionSeg(); el.nsMeta.textContent = `${ownCreds() ? 'your credentials' : 'site API'} · ${ns('profile')} · ${el.locale.value}`; }
+function updateNsMeta(){ syncRegionSeg(); el.nsMeta.textContent = `${ns('profile')} · ${el.locale.value}`; }
 
 async function pool(items, limit, fn){
   const out = new Array(items.length); let i = 0;
@@ -1112,87 +1080,19 @@ async function pool(items, limit, fn){
   return out;
 }
 
-/* =======================================================================
-   AUTH
-   ======================================================================= */
-function loadCreds(){
-  const store = sGet('localStorage','ll_creds') ? 'localStorage' : 'sessionStorage';
-  try{
-    const c = JSON.parse(sGet(store,'ll_creds') || '{}');
-    el.clientId.value = c.id || ''; el.clientSecret.value = c.secret || '';
-    el.remember.checked = store === 'localStorage' && !!c.id;
-  }catch(e){}
-  el.manualToken.value = sGet('sessionStorage','ll_manual_token') || '';
-  refreshCredState();
-}
-function saveCreds(){
-  const c = JSON.stringify({ id: el.clientId.value.trim(), secret: el.clientSecret.value.trim() });
-  if(el.remember.checked){ sSet('localStorage','ll_creds',c); sDel('sessionStorage','ll_creds'); }
-  else { sSet('sessionStorage','ll_creds',c); sDel('localStorage','ll_creds'); }
-  const t = el.manualToken.value.trim();
-  if(t) sSet('sessionStorage','ll_manual_token', t); else sDel('sessionStorage','ll_manual_token');
-  refreshCredState();
-}
-function ownCreds(){ return !!(el.manualToken.value.trim() || (el.clientId.value.trim() && el.clientSecret.value.trim())); }
-function refreshCredState(){
-  const own = ownCreds();
-  el.credState.textContent = own ? 'using your credentials' : 'using site API';
-  el.credState.className = 'cred-state ok';
-  if(el.nsMeta) updateNsMeta();
-}
-
-let tokenCache = null; // {token, exp, id}
-async function getToken(force){
-  const manual = el.manualToken.value.trim().replace(/^Bearer\s+/i,'');
-  if(manual) return manual;
-  const id = el.clientId.value.trim(), secret = el.clientSecret.value.trim();
-  if(!id || !secret){ el.credsBox.open = true; throw new Error('Add your Blizzard API Client ID and Secret (or paste an access token) under "Blizzard API access".'); }
-  if(!force){
-    if(!tokenCache){ try{ tokenCache = JSON.parse(sGet('sessionStorage','ll_token') || 'null'); }catch(e){} }
-    if(tokenCache && tokenCache.id === id && tokenCache.exp > Date.now() + 60000) return tokenCache.token;
-  }
-  let resp;
-  try{
-    resp = await fetch('https://oauth.battle.net/token', {
-      method:'POST',
-      headers:{ 'Authorization':'Basic ' + btoa(id + ':' + secret), 'Content-Type':'application/x-www-form-urlencoded' },
-      body:'grant_type=client_credentials'
-    });
-  }catch(e){
-    throw new Error("The browser couldn't reach oauth.battle.net (network or CORS error). Make a token with the curl command under \"Blizzard API access\" and paste it there instead.");
-  }
-  if(resp.status === 401 || resp.status === 400) throw new Error('Blizzard rejected those credentials (HTTP ' + resp.status + '). Double-check your Client ID and Secret.');
-  if(!resp.ok) throw new Error('Token request failed (HTTP ' + resp.status + ').');
-  const j = await resp.json();
-  if(!j.access_token) throw new Error('No access token in the response.');
-  tokenCache = { token: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000, id };
-  sSet('sessionStorage','ll_token', JSON.stringify(tokenCache));
-  return j.access_token;
-}
 
 /* =======================================================================
-   API
+   API — every request goes through the site's Cloudflare Worker, which
+   holds the Blizzard API key. Visitors never need credentials.
    ======================================================================= */
-async function api(pathOrUrl, namespace, retried){
+// Earlier versions let visitors store their own Blizzard credentials; remove any leftovers.
+['ll_creds','ll_token','ll_manual_token'].forEach(k => { sDel('sessionStorage', k); sDel('localStorage', k); });
+
+async function api(pathOrUrl, namespace){
   const url = new URL(/^https?:/.test(pathOrUrl) ? pathOrUrl : apiHost() + pathOrUrl);
   if(namespace && !url.searchParams.has('namespace')) url.searchParams.set('namespace', namespace);
   url.searchParams.set('locale', el.locale.value);
-  if(!ownCreds()) return viaWorker(url);
-  const token = await getToken();
-  let resp;
-  try{
-    resp = await fetch(url.toString(), { headers:{ 'Authorization':'Bearer ' + token } });
-  }catch(e){
-    return { ok:false, status:0, error:'Network/CORS error', url: url.toString() };
-  }
-  if(resp.status === 401 && !retried && !el.manualToken.value.trim()){
-    tokenCache = null; sDel('sessionStorage','ll_token');
-    await getToken(true);
-    return api(pathOrUrl, namespace, true);
-  }
-  let json = null;
-  try{ json = await resp.json(); }catch(e){}
-  return { ok: resp.ok, status: resp.status, json, url: url.toString() };
+  return viaWorker(url);
 }
 
 // Same request, sent through the site's Cloudflare Worker (which adds the API token server-side).
@@ -1281,7 +1181,6 @@ function surnameOf(summary){
 
 async function search(){
   clearStatus();
-  saveCreds();
   const { name, surname } = parseNameInput(el.name.value);
   if(!name){ setStatus('Enter a character name.', 'error'); el.name.focus(); return; }
 
@@ -1334,10 +1233,10 @@ async function search(){
 
 function describeFailure(res){
   if(res.viaWorker){
-    if(res.status === 0) return `Couldn't reach the site API at <code>${esc(workerUrl())}</code>. It may be down, or <code>/api/blizzard</code> may not be deployed yet. You can enter your own Blizzard API credentials under "Use your own Blizzard API credentials" instead.`;
+    if(res.status === 0) return `Couldn't reach the site API at <code>${esc(workerUrl())}</code>. It may be down; please try again in a few minutes.`;
     if(res.json && res.json.error) return `Site API error (HTTP ${res.status}): ${esc(res.json.error)}`;
   }
-  if(res.status === 401) return 'Blizzard rejected the access token (HTTP 401). Check your credentials.';
+  if(res.status === 401) return 'The site API was refused by Blizzard (HTTP 401). Please try again later.';
   if(res.status === 403) return `Access denied (HTTP 403) for namespace <code>${esc(ns('profile'))}</code>. The namespace may be wrong; check the Advanced settings.`;
   if(res.status === 0) return "Couldn't reach the Blizzard API (network/CORS error).";
   return `Blizzard API error (HTTP ${res.status}).`;
@@ -2071,8 +1970,6 @@ function saveNs(){
 }
 
 el.form.addEventListener('submit', e => { e.preventDefault(); search(); });
-[el.clientId, el.clientSecret, el.manualToken].forEach(i => i.addEventListener('input', () => { tokenCache = null; refreshCredState(); }));
-el.remember.addEventListener('change', saveCreds);
 [el.nsProfile, el.nsDynamic, el.workerUrl].forEach(i => i.addEventListener('change', () => { realmCache = {}; saveNs(); }));
 el.locale.addEventListener('change', saveNs);
 el.region.addEventListener('change', () => {
@@ -2083,25 +1980,9 @@ el.region.addEventListener('change', () => {
 el.resetNsBtn.addEventListener('click', () => {
   el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; el.workerUrl.value = DEFAULT_WORKER_URL; realmCache = {}; saveNs();
 });
-el.testBtn.addEventListener('click', async () => {
-  saveCreds();
-  setStatus('<span class="spinner"></span>Connecting to Blizzard…');
-  try{
-    realmCache[region()] = null;
-    const realms = await loadRealms();
-    setStatus(`Connected. Found ${realms.length} WoW: Forever realm${realms.length === 1 ? '' : 's'} in ${region().toUpperCase()}.`, 'success');
-  }catch(e){ setStatus(e.message, 'error'); }
-});
-el.forgetBtn.addEventListener('click', () => {
-  ['ll_creds','ll_token','ll_manual_token'].forEach(k => { sDel('sessionStorage', k); sDel('localStorage', k); });
-  el.clientId.value = el.clientSecret.value = el.manualToken.value = ''; el.remember.checked = false;
-  tokenCache = null; refreshCredState();
-  setStatus('Credentials cleared from this browser.', 'info');
-});
 window.addEventListener('hashchange', fromHash);
 
 loadNs();
-loadCreds();
 renderRecent();
 /* =======================================================================
    INTERACTION LAYER (presentation only — no data logic)
