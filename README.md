@@ -3,9 +3,18 @@
 A single static page (`index.html`) for looking up World of Warcraft: Forever characters with the official Blizzard Battle.net API.
 
 ## How requests reach Blizzard
-By default, every request goes through the Cloudflare Worker at `https://wcgear.lambertdaniel26.workers.dev` (source: `Kalium2/WCgear`, `worker.js`, route `GET /api/blizzard`). The worker holds the Blizzard client secret, adds the OAuth token, and passes through only an allowlisted set of read-only paths, so visitors need no credentials. Its CORS origin is `https://kalium2.github.io`, so the page has to be served from GitHub Pages (or the worker's `ALLOWED_ORIGIN` changed) for browser calls to succeed.
+By default, every request goes through a small Cloudflare Worker (`worker/worker.js`, route `GET /api/blizzard`). The worker holds the Blizzard client secret, adds the OAuth token, and passes through only an allowlisted set of read-only paths (character profiles, realms, items, item icons, guilds), so visitors need no credentials. It only sends CORS headers for the origins in `ALLOWED_ORIGINS` (default `https://kalium2.github.io`).
 
 If the worker is unavailable, a visitor can expand **Use your own Blizzard API credentials** and enter their own client ID/secret (from https://develop.battle.net/access/clients) or paste a token; the browser then calls Blizzard directly. The worker URL can be changed under **Advanced**.
+
+## Deploying the worker
+```bash
+cd worker
+npx wrangler deploy
+npx wrangler secret put BLIZZARD_CLIENT_ID
+npx wrangler secret put BLIZZARD_CLIENT_SECRET
+```
+Check it with `https://forever-armory.<your-subdomain>.workers.dev/health`, which should return `{"ok":true,"credentials":true}`. If the worker URL isn't `https://forever-armory.lambertdaniel26.workers.dev`, update `DEFAULT_WORKER_URL` in `index.html`.
 
 ## How it works
 - **Realms:** Forever hides realms, so by default the page loads the realm index (`dynamic-forever-{region}`) and checks every realm for the name. If several characters match, you pick one.

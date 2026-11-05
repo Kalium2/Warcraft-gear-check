@@ -356,9 +356,10 @@
    CONFIG
    ======================================================================= */
 const DEFAULT_NS = { profile: 'profile-forever-{region}', dynamic: 'dynamic-forever-{region}' };
-// Cloudflare Worker (Kalium2/WCgear, worker.js -> /api/blizzard) that holds the Blizzard
+// Cloudflare Worker (this repo: worker/worker.js -> /api/blizzard) that holds the Blizzard
 // API secret and passes read-only requests through. Used unless the visitor enters their own credentials.
-const DEFAULT_WORKER_URL = 'https://wcgear.lambertdaniel26.workers.dev';
+// If you deploy it under another name/account, change this (or set it under Advanced on the page).
+const DEFAULT_WORKER_URL = 'https://forever-armory.lambertdaniel26.workers.dev';
 
 // Character endpoints we always try (relative to /profile/wow/character/{realm}/{name}).
 // Any extra links the character summary returns are followed as well.
