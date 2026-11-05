@@ -1,11 +1,11 @@
 # Loot Ledger — WoW: Forever Armory
 
-A single static page (`index.html`) for looking up World of Warcraft: Forever characters with the official Blizzard Battle.net API. It has no backend: the browser talks to Blizzard directly.
+A single static page (`index.html`) for looking up World of Warcraft: Forever characters with the official Blizzard Battle.net API.
 
-## Setup
-1. Create a free API client at https://develop.battle.net/access/clients.
-2. Open the site, expand **Blizzard API access**, and enter the Client ID and Secret (or paste an access token).
-3. Pick a region, type a character name and press **Search**.
+## How requests reach Blizzard
+By default, every request goes through the Cloudflare Worker at `https://wcgear.lambertdaniel26.workers.dev` (source: `Kalium2/WCgear`, `worker.js`, route `GET /api/blizzard`). The worker holds the Blizzard client secret, adds the OAuth token, and passes through only an allowlisted set of read-only paths, so visitors need no credentials. Its CORS origin is `https://kalium2.github.io`, so the page has to be served from GitHub Pages (or the worker's `ALLOWED_ORIGIN` changed) for browser calls to succeed.
+
+If the worker is unavailable, a visitor can expand **Use your own Blizzard API credentials** and enter their own client ID/secret (from https://develop.battle.net/access/clients) or paste a token; the browser then calls Blizzard directly. The worker URL can be changed under **Advanced**.
 
 ## How it works
 - **Realms:** Forever hides realms, so by default the page loads the realm index (`dynamic-forever-{region}`) and checks every realm for the name. If several characters match, you pick one.

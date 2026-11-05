@@ -277,12 +277,13 @@
       </form>
 
       <details class="box" id="credsBox">
-        <summary>Blizzard API access <span class="cred-state no" id="credState">not set</span></summary>
+        <summary>Use your own Blizzard API credentials (optional) <span class="cred-state ok" id="credState">using site API</span></summary>
         <div class="inner">
           <p class="field-hint" style="margin-top:0">
-            This site has no server of its own, so it talks to Blizzard straight from your browser and you need your own free API client.
-            Create one at <a href="https://develop.battle.net/access/clients" target="_blank" rel="noopener">develop.battle.net ↗</a>
-            (any redirect URL works; you only need the Client ID and Secret). Your credentials are sent only to <code>oauth.battle.net</code> and are kept in this tab's session storage, unless you tick "remember".
+            You don't need this: by default, lookups go through this site's own API proxy, which has its own Blizzard key.
+            Fill these in only if the site API is down or rate-limited. Then your browser calls Blizzard directly with your own free API client from
+            <a href="https://develop.battle.net/access/clients" target="_blank" rel="noopener">develop.battle.net ↗</a>.
+            Your credentials are sent only to <code>oauth.battle.net</code> and are kept in this tab's session storage, unless you tick "remember".
           </p>
           <div class="row2">
             <div class="fld"><label for="clientId">Client ID</label><input type="text" id="clientId" spellcheck="false"></div>
@@ -298,18 +299,19 @@
           <p class="field-hint">If the browser blocks the token request, make a token in a terminal and paste it here (it lasts about 24h):<br>
             <code>curl -u CLIENT_ID:CLIENT_SECRET -d grant_type=client_credentials https://oauth.battle.net/token</code></p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-            <button type="button" class="ghost" id="testBtn">Test connection &amp; load realms</button>
+            <button type="button" class="ghost" id="testBtn">Test connection &amp; reload realms</button>
             <button type="button" class="ghost" id="forgetBtn">Forget credentials</button>
           </div>
         </div>
       </details>
 
       <details class="box">
-        <summary>Advanced: API namespaces</summary>
+        <summary>Advanced: API proxy &amp; namespaces</summary>
         <div class="inner">
           <p class="field-hint" style="margin-top:0">
             Blizzard hasn't documented the Forever API yet. These defaults (<code>profile-forever-{region}</code> and <code>dynamic-forever-{region}</code>) come from community testing. If Blizzard changes them, update them here; your changes are saved in this browser. Use <code>{region}</code> as a placeholder.
           </p>
+          <div class="fld" style="margin-bottom:10px"><label for="workerUrl">Site API proxy (Cloudflare Worker)</label><input type="text" id="workerUrl" spellcheck="false"></div>
           <div class="row2">
             <div class="fld"><label for="nsProfile">Profile namespace</label><input type="text" id="nsProfile" spellcheck="false"></div>
             <div class="fld"><label for="nsDynamic">Dynamic namespace (realms)</label><input type="text" id="nsDynamic" spellcheck="false"></div>
@@ -337,7 +339,7 @@
     <div class="panel">
       <div class="empty-state">
         <div class="glyph">⚔</div>
-        <p>Add your Blizzard API credentials, enter a character name and hit <strong>Search</strong>.</p>
+        <p>Enter a character name and hit <strong>Search</strong>.</p>
       </div>
     </div>
   </div>
@@ -354,6 +356,9 @@
    CONFIG
    ======================================================================= */
 const DEFAULT_NS = { profile: 'profile-forever-{region}', dynamic: 'dynamic-forever-{region}' };
+// Cloudflare Worker (Kalium2/WCgear, worker.js -> /api/blizzard) that holds the Blizzard
+// API secret and passes read-only requests through. Used unless the visitor enters their own credentials.
+const DEFAULT_WORKER_URL = 'https://wcgear.lambertdaniel26.workers.dev';
 
 // Character endpoints we always try (relative to /profile/wow/character/{realm}/{name}).
 // Any extra links the character summary returns are followed as well.
@@ -413,7 +418,7 @@ const el = {
   clientId: $('clientId'), clientSecret: $('clientSecret'), remember: $('remember'), manualToken: $('manualToken'),
   credState: $('credState'), credsBox: $('credsBox'), testBtn: $('testBtn'), forgetBtn: $('forgetBtn'),
   nsProfile: $('nsProfile'), nsDynamic: $('nsDynamic'), locale: $('locale'), realmSlug: $('realmSlug'),
-  resetNsBtn: $('resetNsBtn'), nsMeta: $('nsMeta'), status: $('status'), results: $('results'), recent: $('recent')
+  resetNsBtn: $('resetNsBtn'), workerUrl: $('workerUrl'), nsMeta: $('nsMeta'), status: $('status'), results: $('results'), recent: $('recent')
 };
 
 /* =======================================================================
@@ -442,7 +447,8 @@ function clearStatus(){ el.status.className = 'status'; el.status.innerHTML = ''
 function region(){ return el.region.value; }
 function ns(kind){ const raw = (kind === 'profile' ? el.nsProfile.value : el.nsDynamic.value).trim() || DEFAULT_NS[kind]; return raw.replace('{region}', region()); }
 function apiHost(){ return `https://${region()}.api.blizzard.com`; }
-function updateNsMeta(){ el.nsMeta.textContent = `${ns('profile')} · ${el.locale.value}`; }
+function workerUrl(){ return (el.workerUrl.value.trim() || DEFAULT_WORKER_URL).replace(/\/+$/, ''); }
+function updateNsMeta(){ el.nsMeta.textContent = `${ownCreds() ? 'your credentials' : 'site API'} · ${ns('profile')} · ${el.locale.value}`; }
 
 async function pool(items, limit, fn){
   const out = new Array(items.length); let i = 0;
@@ -472,11 +478,12 @@ function saveCreds(){
   if(t) sSet('sessionStorage','ll_manual_token', t); else sDel('sessionStorage','ll_manual_token');
   refreshCredState();
 }
-function hasCreds(){ return !!(el.manualToken.value.trim() || (el.clientId.value.trim() && el.clientSecret.value.trim())); }
+function ownCreds(){ return !!(el.manualToken.value.trim() || (el.clientId.value.trim() && el.clientSecret.value.trim())); }
 function refreshCredState(){
-  const ok = hasCreds();
-  el.credState.textContent = ok ? 'ready' : 'not set';
-  el.credState.className = 'cred-state ' + (ok ? 'ok' : 'no');
+  const own = ownCreds();
+  el.credState.textContent = own ? 'using your credentials' : 'using site API';
+  el.credState.className = 'cred-state ok';
+  if(el.nsMeta) updateNsMeta();
 }
 
 let tokenCache = null; // {token, exp, id}
@@ -515,6 +522,7 @@ async function api(pathOrUrl, namespace, retried){
   const url = new URL(/^https?:/.test(pathOrUrl) ? pathOrUrl : apiHost() + pathOrUrl);
   if(namespace && !url.searchParams.has('namespace')) url.searchParams.set('namespace', namespace);
   url.searchParams.set('locale', el.locale.value);
+  if(!ownCreds()) return viaWorker(url);
   const token = await getToken();
   let resp;
   try{
@@ -532,12 +540,27 @@ async function api(pathOrUrl, namespace, retried){
   return { ok: resp.ok, status: resp.status, json, url: url.toString() };
 }
 
+// Same request, sent through the site's Cloudflare Worker (which adds the API token server-side).
+async function viaWorker(url){
+  const regionOfHost = (url.hostname.match(/^([a-z]{2})\.api\.blizzard\.com$/) || [])[1] || region();
+  const q = new URLSearchParams({
+    region: regionOfHost, path: url.pathname,
+    namespace: url.searchParams.get('namespace') || '', locale: url.searchParams.get('locale') || 'en_US'
+  });
+  let resp;
+  try{ resp = await fetch(`${workerUrl()}/api/blizzard?${q}`); }
+  catch(e){ return { ok:false, status:0, error:'Network/CORS error', url: url.toString(), viaWorker:true }; }
+  let json = null;
+  try{ json = await resp.json(); }catch(e){}
+  return { ok: resp.ok, status: resp.status, json, url: url.toString(), viaWorker:true };
+}
+
 let realmCache = {}; // region -> [{name, slug, id}]
 async function loadRealms(){
   const r = region();
   if(realmCache[r]) { fillRealmSelect(realmCache[r]); return realmCache[r]; }
   const res = await api('/data/wow/realm/index', ns('dynamic'));
-  if(res.status === 401) throw new Error('Blizzard rejected the access token (HTTP 401). Check your credentials.');
+  if(!res.ok && (res.status === 0 || res.status === 401 || (res.viaWorker && res.json && res.json.error))) throw new Error(describeFailure(res));
   if(!res.ok || !res.json || !Array.isArray(res.json.realms)){
     throw new Error(`Couldn't load the realm list for ${r.toUpperCase()} (HTTP ${res.status}). The namespace <code>${esc(ns('dynamic'))}</code> may be wrong; check the Advanced settings.`);
   }
@@ -629,6 +652,10 @@ async function search(){
 }
 
 function describeFailure(res){
+  if(res.viaWorker){
+    if(res.status === 0) return `Couldn't reach the site API at <code>${esc(workerUrl())}</code>. It may be down, or <code>/api/blizzard</code> may not be deployed yet. You can enter your own Blizzard API credentials under "Use your own Blizzard API credentials" instead.`;
+    if(res.json && res.json.error) return `Site API error (HTTP ${res.status}): ${esc(res.json.error)}`;
+  }
   if(res.status === 401) return 'Blizzard rejected the access token (HTTP 401). Check your credentials.';
   if(res.status === 403) return `Access denied (HTTP 403) for namespace <code>${esc(ns('profile'))}</code>. The namespace may be wrong; check the Advanced settings.`;
   if(res.status === 0) return "Couldn't reach the Blizzard API (network/CORS error).";
@@ -1185,7 +1212,6 @@ async function lookupDirect(reg, realm, name){
   }
   el.realm.value = realm;
   updateNsMeta();
-  if(!hasCreds()){ el.credsBox.open = true; setStatus('Add your Blizzard API credentials to load this character.', 'info'); return; }
   await search();
 }
 function fromHash(){
@@ -1204,28 +1230,29 @@ function loadNs(){
     const s = JSON.parse(sGet('localStorage','ll_ns') || '{}');
     el.nsProfile.value = s.profile || DEFAULT_NS.profile;
     el.nsDynamic.value = s.dynamic || DEFAULT_NS.dynamic;
+    el.workerUrl.value = s.worker || DEFAULT_WORKER_URL;
     if(s.locale) el.locale.value = s.locale;
     if(s.region) el.region.value = s.region;
-  }catch(e){ el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; }
+  }catch(e){ el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; el.workerUrl.value = DEFAULT_WORKER_URL; }
   updateNsMeta();
 }
 function saveNs(){
-  sSet('localStorage','ll_ns', JSON.stringify({ profile: el.nsProfile.value.trim(), dynamic: el.nsDynamic.value.trim(), locale: el.locale.value, region: el.region.value }));
+  sSet('localStorage','ll_ns', JSON.stringify({ profile: el.nsProfile.value.trim(), dynamic: el.nsDynamic.value.trim(), worker: el.workerUrl.value.trim(), locale: el.locale.value, region: el.region.value }));
   updateNsMeta();
 }
 
 el.form.addEventListener('submit', e => { e.preventDefault(); search(); });
 [el.clientId, el.clientSecret, el.manualToken].forEach(i => i.addEventListener('input', () => { tokenCache = null; refreshCredState(); }));
 el.remember.addEventListener('change', saveCreds);
-[el.nsProfile, el.nsDynamic].forEach(i => i.addEventListener('change', () => { realmCache = {}; saveNs(); }));
+[el.nsProfile, el.nsDynamic, el.workerUrl].forEach(i => i.addEventListener('change', () => { realmCache = {}; saveNs(); }));
 el.locale.addEventListener('change', saveNs);
 el.region.addEventListener('change', () => {
   saveNs();
   el.realm.innerHTML = '<option value="">Auto-detect (search all)</option>';
-  if(hasCreds()) loadRealms().catch(() => {});
+  loadRealms().catch(() => {});
 });
 el.resetNsBtn.addEventListener('click', () => {
-  el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; realmCache = {}; saveNs();
+  el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; el.workerUrl.value = DEFAULT_WORKER_URL; realmCache = {}; saveNs();
 });
 el.testBtn.addEventListener('click', async () => {
   saveCreds();
@@ -1247,9 +1274,8 @@ window.addEventListener('hashchange', fromHash);
 loadNs();
 loadCreds();
 renderRecent();
-if(!hasCreds()) el.credsBox.open = true;
 if(location.hash.length > 1) fromHash();
-else if(hasCreds()) loadRealms().catch(() => {});
+else loadRealms().catch(() => {});
 </script>
 </body>
 </html>
