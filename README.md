@@ -8,13 +8,9 @@ By default, every request goes through a small Cloudflare Worker (`worker/worker
 If the worker is unavailable, a visitor can expand **Use your own Blizzard API credentials** and enter their own client ID/secret (from https://develop.battle.net/access/clients) or paste a token; the browser then calls Blizzard directly. The worker URL can be changed under **Advanced**.
 
 ## Deploying the worker
-```bash
-cd worker
-npx wrangler deploy
-npx wrangler secret put BLIZZARD_CLIENT_ID
-npx wrangler secret put BLIZZARD_CLIENT_SECRET
-```
-Check it with `https://warcraft-gear-check.<your-subdomain>.workers.dev/health`, which should return `{"ok":true,"credentials":true}`. If the worker URL isn't `https://warcraft-gear-check.lambertdaniel26.workers.dev`, update `DEFAULT_WORKER_URL` in `index.html`.
+The worker config is `wrangler.jsonc` at the repo root (code in `worker/worker.js`), so Cloudflare's Git integration can build from the repo root with deploy command `npx wrangler deploy`. Set two secrets on the worker: `BLIZZARD_CLIENT_ID` and `BLIZZARD_CLIENT_SECRET`.
+
+Check it with `https://warcraft-gear-check.lambertdaniel26.workers.dev/health`, which should return `{"ok":true,"credentials":true}`. If the worker URL is different, update `DEFAULT_WORKER_URL` in `index.html`.
 
 ## How it works
 - **Realms:** Forever hides realms, so by default the page loads the realm index (`dynamic-forever-{region}`) and checks every realm for the name. If several characters match, you pick one.

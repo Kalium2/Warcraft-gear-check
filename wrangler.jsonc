@@ -1,0 +1,17 @@
+// Cloudflare Worker config for the Blizzard API proxy (worker/worker.js).
+// Lives at the repo root so Cloudflare's Git builds pick it up without a
+// custom root directory. The static site itself is served by GitHub Pages,
+// not by this worker, so there is deliberately no "assets" section.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "warcraft-gear-check",
+  "main": "worker/worker.js",
+  "compatibility_date": "2026-11-03",
+  "observability": { "enabled": true },
+  "vars": {
+    // Sites allowed to call the worker from a browser (comma-separated).
+    "ALLOWED_ORIGINS": "https://kalium2.github.io"
+  }
+  // Secrets (set in the dashboard or with `npx wrangler secret put`):
+  //   BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET
+}
