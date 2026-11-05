@@ -556,6 +556,13 @@ async function viaWorker(url){
   return { ok: resp.ok, status: resp.status, json, url: url.toString(), viaWorker:true };
 }
 
+// Shown when Blizzard answers "404 Not Found" for Forever data: the namespace exists but
+// Blizzard isn't serving anything behind it (the case since the Nov 4, 2026 launch).
+const FOREVER_UNAVAILABLE_MSG =
+  "<strong>Blizzard isn't sharing WoW: Forever character data yet.</strong> " +
+  "Since the game launched on November 4, Blizzard's public API has returned nothing for Forever, so no character can be looked up right now. " +
+  "Nothing is wrong with your search or with this site: it will start working on its own once Blizzard switches the data on. Please check back later.";
+
 let realmCache = {}; // region -> [{name, slug, id}]
 async function loadRealms(){
   const r = region();
@@ -563,7 +570,8 @@ async function loadRealms(){
   const res = await api('/data/wow/realm/index', ns('dynamic'));
   if(!res.ok && (res.status === 0 || res.status === 401 || (res.viaWorker && res.json && res.json.error))) throw new Error(describeFailure(res));
   if(!res.ok || !res.json || !Array.isArray(res.json.realms)){
-    throw new Error(`Couldn't load the realm list for ${r.toUpperCase()} (HTTP ${res.status}). The namespace <code>${esc(ns('dynamic'))}</code> may be wrong; check the Advanced settings.`);
+    if(res.status === 404) throw new Error(FOREVER_UNAVAILABLE_MSG);
+    throw new Error(`Couldn't get the list of realms from Blizzard (error ${res.status}). If this keeps happening, the data-set name under Advanced (<code>${esc(ns('dynamic'))}</code>) may need updating.`);
   }
   const realms = res.json.realms.map(x => ({ name: nameOf(x) || x.slug, slug: x.slug, id: x.id }))
                                 .sort((a,b) => a.name.localeCompare(b.name));
@@ -1250,7 +1258,7 @@ el.locale.addEventListener('change', saveNs);
 el.region.addEventListener('change', () => {
   saveNs();
   el.realm.innerHTML = '<option value="">Auto-detect (search all)</option>';
-  loadRealms().catch(() => {});
+  loadRealms().catch(showIfForeverUnavailable);
 });
 el.resetNsBtn.addEventListener('click', () => {
   el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; el.workerUrl.value = DEFAULT_WORKER_URL; realmCache = {}; saveNs();
@@ -1275,8 +1283,9 @@ window.addEventListener('hashchange', fromHash);
 loadNs();
 loadCreds();
 renderRecent();
+function showIfForeverUnavailable(e){ if(e && e.message === FOREVER_UNAVAILABLE_MSG) setStatus(e.message, 'info'); }
 if(location.hash.length > 1) fromHash();
-else loadRealms().catch(() => {});
+else loadRealms().catch(showIfForeverUnavailable);
 </script>
 </body>
 </html>
