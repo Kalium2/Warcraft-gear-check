@@ -1,4 +1,4 @@
-name = "forever-armory"
+name = "warcraft-gear-check"
 main = "worker.js"
 compatibility_date = "2026-11-01"
 

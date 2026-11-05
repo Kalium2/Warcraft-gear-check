@@ -14,7 +14,7 @@ npx wrangler deploy
 npx wrangler secret put BLIZZARD_CLIENT_ID
 npx wrangler secret put BLIZZARD_CLIENT_SECRET
 ```
-Check it with `https://forever-armory.<your-subdomain>.workers.dev/health`, which should return `{"ok":true,"credentials":true}`. If the worker URL isn't `https://forever-armory.lambertdaniel26.workers.dev`, update `DEFAULT_WORKER_URL` in `index.html`.
+Check it with `https://warcraft-gear-check.<your-subdomain>.workers.dev/health`, which should return `{"ok":true,"credentials":true}`. If the worker URL isn't `https://warcraft-gear-check.lambertdaniel26.workers.dev`, update `DEFAULT_WORKER_URL` in `index.html`.
 
 ## How it works
 - **Realms:** Forever hides realms, so by default the page loads the realm index (`dynamic-forever-{region}`) and checks every realm for the name. If several characters match, you pick one.
