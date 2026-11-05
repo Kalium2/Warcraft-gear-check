@@ -18,10 +18,10 @@
    ========================================================================== */
 :root{
   /* surfaces */
-  --ink-0:#08090c;
-  --ink-1:#0e1015;
-  --ink-2:#14171e;
-  --ink-3:#1b1f28;
+  --ink-0:#07090e;
+  --ink-1:#0d1119;
+  --ink-2:#131925;
+  --ink-3:#1b2231;
   /* lines */
   --line:rgba(236,226,204,.08);
   --line-2:rgba(236,226,204,.16);
@@ -582,6 +582,245 @@ footer a{color:var(--ash);}
 @media (max-width:640px){ footer{grid-template-columns:1fr;} }
 
 /* ==========================================================================
+   v3 — armory components
+   ========================================================================== */
+
+/* class tint: results set --cls to the character's class colour */
+#results{--cls:var(--gold);}
+#results .panel-head h2::before{background:var(--cls);}
+.cls-txt{color:var(--cls)!important;}
+
+/* top navigation */
+.top-right{display:flex;align-items:center;gap:18px;min-width:0;}
+.topnav a{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);text-decoration:none;white-space:nowrap;}
+.topnav a:hover{color:var(--gold-hi);}
+@media (max-width:560px){ .topnav{display:none;} }
+
+/* secondary call to action */
+.cta{
+  display:inline-flex;align-items:center;gap:12px;margin-top:24px;cursor:pointer;
+  height:44px;padding:0 24px;border:1px solid var(--gold-lo);background:rgba(217,180,95,.06);color:var(--gold-hi);
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%);
+  transition:background-color .2s,color .2s;
+}
+.cta::after{content:"→";letter-spacing:0;transition:transform .25s var(--ease);}
+.cta:hover{background:var(--gold);color:var(--ink-0);}
+.cta:hover::after{transform:translateX(4px);}
+.linkbtn{background:none;border:0;padding:0;color:var(--gold-hi);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(244,216,143,.4);}
+.linkbtn:hover{text-decoration-color:currentColor;}
+
+/* ---------- character banner ---------- */
+.banner{
+  position:relative;overflow:hidden;margin-bottom:22px;border:1px solid var(--line);
+  border-top:2px solid var(--cls);
+  background:
+    radial-gradient(ellipse 55% 140% at 8% 30%, color-mix(in srgb, var(--cls) 26%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 90% at 100% 100%, color-mix(in srgb, var(--cls) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--ink-2), var(--ink-1));
+}
+.banner::after{ /* engraved diagonal hatching */
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.35;
+  background:repeating-linear-gradient(135deg, transparent 0 22px, rgba(255,255,255,.018) 22px 23px);
+}
+.banner-inner{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(18px,3vw,36px);align-items:center;padding:clamp(22px,3.4vw,38px);}
+@media (max-width:900px){ .banner-inner{grid-template-columns:auto minmax(0,1fr);} .tiles{grid-column:1 / -1;} }
+@media (max-width:520px){ .banner-inner{grid-template-columns:1fr;} .crest{width:84px;height:96px;} }
+.crest{
+  width:108px;height:124px;flex:none;position:relative;display:grid;place-items:center;
+  background:linear-gradient(160deg, var(--cls), color-mix(in srgb, var(--cls) 30%, #000));
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+}
+.crest::before{content:"";position:absolute;inset:2px;background:var(--ink-0);clip-path:inherit;}
+.crest img{position:relative;width:calc(100% - 4px);height:calc(100% - 4px);object-fit:cover;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);}
+.crest svg{position:relative;width:52%;height:auto;color:var(--cls);}
+.ident{min-width:0;}
+.banner .hero-title{color:color-mix(in srgb, var(--cls) 70%, var(--bone));}
+.banner .hero-name{font-size:clamp(38px,5.4vw,64px);}
+.banner .hero-name .first{color:var(--cls);}
+.banner .hero-name .sur{font-weight:500;font-style:italic;color:var(--bone);}
+.banner .hero-line{margin:12px 0 16px;}
+.banner .guild{margin-left:10px;color:var(--bone);}
+.banner .badges{margin-bottom:0;}
+.sample-flag{
+  position:relative;z-index:1;display:flex;align-items:center;gap:10px;padding:10px clamp(22px,3.4vw,38px);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#1a1408;background:var(--gold);
+}
+@media (max-width:640px){ .sample-flag .sf-more{display:none;} }
+.sample-flag i{width:7px;height:7px;background:#1a1408;transform:rotate(45deg);flex:none;}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);}
+@media (max-width:900px){ .tiles{grid-template-columns:repeat(4,minmax(0,1fr));} }
+@media (max-width:520px){ .tiles{grid-template-columns:repeat(2,minmax(0,1fr));} }
+.tile{background:rgba(8,9,12,.72);padding:14px 18px;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.tile .tk{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tile .tv{font-family:var(--display);font-weight:600;font-size:34px;line-height:1;color:var(--bone);font-variant-numeric:lining-nums;}
+.tile.gold .tv{color:var(--gold-hi);}
+
+/* ---------- layout: sticky table of contents + content ---------- */
+.char-layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;align-items:start;}
+.toc-title{margin:0 0 10px 14px;font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);}
+@media (min-width:1001px){
+  .toc{position:sticky;top:20px;}
+  .toc .jump{position:static;flex-direction:column;gap:0;margin:0;padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border:0;border-left:1px solid var(--line);overflow:visible;}
+  .toc .jump a{padding:8px 14px;font-size:10.5px;}
+  .toc .jump a::after{left:-4px;top:50%;bottom:auto;transform:translateY(-50%) rotate(45deg) scale(0);background:var(--cls);}
+  .toc .jump a.active{color:var(--bone);}
+  .toc .jump a.active::after{transform:translateY(-50%) rotate(45deg) scale(1);}
+}
+@media (max-width:1000px){
+  .char-layout{grid-template-columns:minmax(0,1fr);gap:0;}
+  .toc{position:sticky;top:0;z-index:20;}
+  .toc-title{display:none;}
+  .toc .jump{margin:0 0 18px;}
+  .toc .jump a.active::after{background:var(--cls);}
+}
+
+/* ---------- equipment: view toggle ---------- */
+.gear-view{position:relative;}
+.viewtog{display:inline-flex;border:1px solid var(--line-2);margin-bottom:22px;}
+.viewtog button{height:34px;padding:0 16px;border:0;background:transparent;color:var(--ash);cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;transition:color .2s,background-color .2s;}
+.viewtog button + button{border-left:1px solid var(--line);}
+.viewtog button:hover{color:var(--bone);}
+.viewtog button[aria-pressed="true"]{background:var(--bone);color:var(--ink-0);}
+.gear-view[data-view="doll"] .view-list, .gear-view[data-view="list"] .view-doll{display:none;}
+
+/* ---------- paperdoll ---------- */
+.pd{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,320px) minmax(0,1fr);gap:20px 22px;align-items:stretch;}
+.pd-col{display:flex;flex-direction:column;justify-content:space-between;gap:6px;}
+.pd-slot{
+  --qc:var(--line-3);
+  display:flex;align-items:center;gap:12px;width:100%;padding:5px;margin:0;border:0;background:transparent;color:var(--bone);
+  font:inherit;text-align:left;cursor:default;min-width:0;
+}
+button.pd-slot{cursor:help;}
+.pd-slot.l{flex-direction:row-reverse;text-align:right;}
+.pd-slot[data-q="POOR"]{--qc:var(--q-poor);} .pd-slot[data-q="COMMON"]{--qc:#cfcfcf;} .pd-slot[data-q="UNCOMMON"]{--qc:var(--q-uncommon);}
+.pd-slot[data-q="RARE"]{--qc:var(--q-rare);} .pd-slot[data-q="EPIC"]{--qc:var(--q-epic);} .pd-slot[data-q="LEGENDARY"]{--qc:var(--q-legendary);}
+.pd-slot[data-q="ARTIFACT"]{--qc:var(--q-artifact);} .pd-slot[data-q="HEIRLOOM"]{--qc:var(--q-heirloom);}
+.pd-icon{
+  position:relative;flex:none;width:46px;height:46px;
+  border:2px solid var(--qc);background:var(--ink-3) center/cover no-repeat;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.7), 0 0 0 1px rgba(0,0,0,.6);
+  transition:transform .2s var(--ease), box-shadow .2s;
+}
+.pd-icon:not(.has-img)::before{ /* glyph until the icon loads */
+  content:"";position:absolute;inset:12px;border:1px solid color-mix(in srgb, var(--qc) 60%, transparent);transform:rotate(45deg);
+}
+.pd-icon b{
+  position:absolute;right:-1px;bottom:-1px;padding:0 3px;background:rgba(0,0,0,.82);
+  font-family:var(--mono);font-weight:500;font-size:9.5px;line-height:14px;color:var(--bone);
+}
+button.pd-slot:hover .pd-icon, button.pd-slot:focus-visible .pd-icon{
+  transform:scale(1.07);box-shadow:inset 0 0 0 1px rgba(0,0,0,.7), 0 0 16px color-mix(in srgb, var(--qc) 70%, transparent);
+}
+button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
+.pd-text{display:flex;flex-direction:column;min-width:0;}
+.pd-name{
+  font-family:var(--display);font-weight:600;font-size:16.5px;line-height:1.15;color:var(--qc);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.pd-slot[data-q="COMMON"] .pd-name{color:var(--bone);}
+.pd-meta{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pd-meta em{font-style:normal;color:#5fd35f;}
+.pd-empty .pd-icon{border:1px dashed var(--line-2);background:transparent;box-shadow:none;}
+.pd-empty .pd-icon::before{border-color:var(--line);}
+.pd-empty .pd-name{color:var(--dim);font-style:italic;font-weight:500;}
+
+.pd-model{
+  position:relative;overflow:hidden;min-height:540px;display:flex;align-items:flex-end;justify-content:center;
+  border:1px solid var(--line);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 45%, color-mix(in srgb, var(--cls) 22%, transparent), transparent 70%),
+    radial-gradient(ellipse 60% 14% at 50% 96%, rgba(0,0,0,.65), transparent 70%),
+    linear-gradient(180deg, var(--ink-1), var(--ink-0));
+}
+.pd-model::before,.pd-model::after{content:"";position:absolute;left:50%;top:44%;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);}
+.pd-model::before{width:82%;aspect-ratio:1;border:1px dashed color-mix(in srgb, var(--cls) 35%, transparent);animation:ring 90s linear infinite;}
+.pd-model::after{width:96%;aspect-ratio:1;border:1px solid color-mix(in srgb, var(--cls) 16%, transparent);
+  background:conic-gradient(from 0deg, transparent 0 88%, color-mix(in srgb, var(--cls) 30%, transparent) 93%, transparent 97%);
+  -webkit-mask:radial-gradient(circle, transparent 69.5%, #000 70%);mask:radial-gradient(circle, transparent 69.5%, #000 70%);
+  animation:ring 26s linear infinite reverse;}
+.pd-model img{position:relative;z-index:1;width:100%;height:100%;max-height:600px;object-fit:cover;object-position:center top;}
+.pd-placeholder{
+  position:relative;z-index:1;align-self:center;width:46%;aspect-ratio:1;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23ffffff' stroke-width='.8'%3E%3Cpath d='M32 2 62 32 32 62 2 32Z' opacity='.5'/%3E%3Cpath d='M32 10 54 32 32 54 10 32Z' opacity='.25'/%3E%3Cpath d='M32 16 35.5 28.5 48 32 35.5 35.5 32 48 28.5 35.5 16 32 28.5 28.5Z' fill='%23ffffff' fill-opacity='.08' opacity='.6'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity:.55;
+}
+.pd-ilvl{
+  position:absolute;z-index:2;left:50%;bottom:16px;transform:translateX(-50%);
+  display:flex;align-items:baseline;gap:10px;padding:8px 20px;white-space:nowrap;
+  background:rgba(8,9,12,.82);border:1px solid var(--line-2);
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);
+}
+.pd-ilvl span{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);}
+.pd-ilvl b{font-family:var(--display);font-weight:600;font-size:26px;line-height:1;color:var(--gold-hi);}
+.pd-bottom{grid-column:1 / -1;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 28px;padding-top:18px;border-top:1px solid var(--line);}
+.pd-bottom .pd-slot{width:auto;max-width:300px;}
+
+@media (max-width:860px){
+  .pd{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 14px;}
+  .pd-model{grid-column:1 / -1;order:-1;min-height:360px;margin-bottom:12px;}
+  .pd-slot.l{flex-direction:row;text-align:left;}
+  .pd-col{justify-content:flex-start;}
+  .pd-bottom{justify-content:flex-start;}
+  .pd-bottom .pd-slot{max-width:none;width:calc(50% - 14px);}
+}
+@media (max-width:520px){
+  .pd{grid-template-columns:minmax(0,1fr);}
+  .pd-bottom .pd-slot{width:100%;}
+}
+
+/* ---------- in-game style tooltip ---------- */
+#tt{
+  position:fixed;z-index:200;left:0;top:0;width:max-content;max-width:330px;min-width:220px;padding:10px 12px 11px;
+  font-family:var(--sans);font-size:13px;line-height:1.42;color:#fff;
+  background:linear-gradient(180deg, rgba(10,14,32,.97), rgba(5,8,20,.97));
+  border:1px solid #8c93a5;border-radius:4px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.85), 0 18px 40px rgba(0,0,0,.6);
+  pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s, transform .12s;
+}
+#tt.on{opacity:1;transform:none;}
+#tt.pinned{
+  pointer-events:auto;left:12px!important;right:12px;top:auto!important;bottom:12px;width:auto;max-width:420px;margin:0 auto;
+  max-height:70vh;overflow:auto;padding-right:36px;
+}
+.tt-name{font-size:15px;font-weight:600;line-height:1.25;margin-bottom:2px;}
+.tt-l{margin:0;}
+.tt-l.row{display:flex;justify-content:space-between;gap:18px;}
+.tt-l.y{color:#ffd100;}
+.tt-l.g{color:#1eff00;}
+.tt-l.gray{color:#9d9d9d;}
+.tt-l.set-name{margin-top:8px;}
+.tt-l.set-piece{color:#9d9d9d;padding-left:10px;}
+.tt-l.set-piece.on{color:#ffffaa;}
+.tt-l.transmog{color:#ff80ff;}
+.tt-l.flav{margin-top:6px;}
+.tt-l.socket{display:flex;align-items:center;gap:7px;color:#fff;}
+.tt-l .gem{width:9px;height:9px;transform:rotate(45deg);background:linear-gradient(135deg,#d9e3ff,#6f7cff);flex:none;}
+.tt-close{position:absolute;right:6px;top:4px;width:28px;height:28px;border:0;background:none;color:#cfd3dd;font-size:20px;cursor:pointer;}
+
+/* list view reuses tooltip line colours */
+.item li.tt-l.g{color:var(--q-uncommon);} .item li.tt-l.y{color:#ffd100;} .item li.tt-l.gray{color:#9d9d9d;}
+.item .icon.has-img::before{display:none;}
+
+/* ---------- character sheet ---------- */
+.sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+.sheet-card{background-color:var(--ink-0);border:1px solid var(--line);padding:16px 18px 10px;}
+.sheet-card h4{margin:0 0 6px;font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--cls);}
+.sheet-card .fact:last-child{border-bottom:0;}
+.kv .fact .v.big{font-size:44px;}
+@media (max-width:860px){ .pd-model:has(.pd-placeholder){min-height:230px;} .pd-model:has(.pd-placeholder) .pd-placeholder{width:34%;} }
+
+/* ---------- bars with custom colour (raid progress, reputation) ---------- */
+.barrow .track > div[style*="--barc"]{background:linear-gradient(90deg, color-mix(in srgb, var(--barc) 45%, transparent), var(--barc));}
+.barrow .track > div[style*="--barc"]::after{background:var(--barc);box-shadow:0 0 10px var(--barc);}
+.reps .standing{font-family:var(--mono);letter-spacing:.06em;}
+.insts{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;}
+.insts .inst{margin:0;}
+
+/* ==========================================================================
    Motion preferences
    ========================================================================== */
 @media (prefers-reduced-motion: reduce){
@@ -607,7 +846,10 @@ footer a{color:var(--ash);}
     <svg class="sigil" aria-hidden="true"><use href="#sigil"/></svg>
     <span class="brand-name">Loot Ledger<span>Forever Armory</span></span>
   </a>
+  <div class="top-right">
+  <nav class="topnav" aria-label="Site"><a href="#results" data-sample>Sample character</a></nav>
   <span class="api-state" id="apiState" data-state="checking" title="Whether Blizzard is serving WoW: Forever data right now"><i></i><b id="apiStateText" style="font-weight:400">Checking API</b></span>
+  </div>
 </header>
 
 <section class="intro">
@@ -742,6 +984,7 @@ footer a{color:var(--ash);}
             <li><span><b>Leave Realm on Auto-detect.</b> Every realm in the region is searched.</span></li>
             <li><span><b>Read the record.</b> Gear, stats, talents and everything else Blizzard holds.</span></li>
           </ol>
+          <button type="button" class="cta" data-sample>Explore a sample character</button>
         </div>
       </div>
     </div>
@@ -972,7 +1215,8 @@ async function viaWorker(url){
 const FOREVER_UNAVAILABLE_MSG =
   "<strong>Blizzard isn't sharing WoW: Forever character data yet.</strong> " +
   "Since the game launched on November 4, Blizzard's public API has returned nothing for Forever, so no character can be looked up right now. " +
-  "Nothing is wrong with your search or with this site: it will start working on its own once Blizzard switches the data on. Please check back later.";
+  "Nothing is wrong with your search or with this site: it will start working on its own once Blizzard switches the data on. " +
+  "In the meantime, <button type=\"button\" class=\"linkbtn\" data-sample>explore a sample character</button>.";
 
 let realmCache = {}; // region -> [{name, slug, id}]
 function setApiState(state, text){
@@ -1173,14 +1417,16 @@ async function openCharacter(realmSlug, summary){
 /* =======================================================================
    RENDER: CHARACTER
    ======================================================================= */
-function classColor(s){ return CLASS_COLORS[(nameOf(s && s.character_class) || '').toLowerCase()] || 'var(--gold-bright)'; }
+function classHex(s){ return CLASS_COLORS[(nameOf(s && s.character_class) || '').toLowerCase()] || ''; }
+function classColor(s){ return classHex(s) || 'var(--gold-bright)'; }
 
 function mediaUrl(mediaJson){
-  if(!mediaJson) return { main:'', avatar:'' };
+  if(!mediaJson) return { main:'', avatar:'', inset:'' };
   const assets = {};
   (mediaJson.assets || []).forEach(a => assets[a.key] = a.value);
   return {
-    main: safeUrl(assets['main-raw'] || assets['main'] || mediaJson.render_url || assets['inset'] || ''),
+    main: safeUrl(assets['main-raw'] || assets['main'] || mediaJson.render_url || ''),
+    inset: safeUrl(assets['inset'] || ''),
     avatar: safeUrl(assets['avatar'] || mediaJson.avatar_url || '')
   };
 }
@@ -1189,25 +1435,34 @@ const SUMMARY_HANDLED = new Set(['_links','id','name','gender','faction','race',
   'level','experience','achievement_points','last_login_timestamp','average_item_level','equipped_item_level','active_title',
   'is_ghost','is_self_found']);
 
+const SIGIL_SVG = '<svg class="sigil" viewBox="0 0 64 64" aria-hidden="true"><use href="#sigil"/></svg>';
+
 function renderCharacter(){
   const { summary: s, data } = current;
   const media = mediaUrl(data['character-media'] && data['character-media'].ok ? data['character-media'].json : null);
+  current._media = media;
   const sur = surnameOf(s);
+  const fullName = s.name + (sur ? ' ' + sur : '');
   const title = s.active_title && s.active_title.display_string
-    ? s.active_title.display_string.replace('{name}', s.name + (sur ? ' ' + sur : '')) : '';
+    ? s.active_title.display_string.replace('{name}', fullName) : '';
   const faction = (s.faction && s.faction.type || '').toLowerCase();
+  const cls = classHex(s);
+  el.results.style.setProperty('--cls', cls || 'var(--gold)');
 
+  // headline tiles (Warcraft Logs-style summary strip)
+  const tiles = [];
+  if(s.equipped_item_level != null) tiles.push(['Item level', s.equipped_item_level, 'gold']);
+  if(s.level != null) tiles.push(['Level', s.level]);
+  if(s.achievement_points != null) tiles.push(['Achievements', fmtNum(s.achievement_points)]);
+  if(s.average_item_level != null && s.average_item_level !== s.equipped_item_level) tiles.push(['Avg item level', s.average_item_level]);
+
+  // every remaining detail as ledger rows
   const facts = [];
-  if(s.level != null) facts.push(['Level', s.level, true]);
-  if(s.equipped_item_level != null) facts.push(['Item Level', s.equipped_item_level, true]);
-  if(s.average_item_level != null && s.average_item_level !== s.equipped_item_level) facts.push(['Avg Item Level', s.average_item_level]);
-  if(s.achievement_points != null) facts.push(['Achievement Pts', fmtNum(s.achievement_points)]);
-  if(s.experience != null) facts.push(['Experience', fmtNum(s.experience)]);
-  if(s.last_login_timestamp) facts.push(['Last Login', fmtDate(s.last_login_timestamp)]);
+  if(s.last_login_timestamp) facts.push(['Last seen', fmtDate(s.last_login_timestamp)]);
   if(s.gender) facts.push(['Gender', nameOf(s.gender)]);
+  if(s.experience != null) facts.push(['Experience', fmtNum(s.experience)]);
   if(s.is_ghost) facts.push(['Status', 'Ghost']);
-  if(s.is_self_found) facts.push(['Self-Found', 'Yes']);
-  // Every other simple field Blizzard sends (picks up Forever-specific fields such as a surname).
+  if(s.is_self_found) facts.push(['Self-found', 'Yes']);
   for(const [k, v] of Object.entries(s)){
     if(SUMMARY_HANDLED.has(k)) continue;
     if(v == null || (typeof v === 'object' && v.href)) continue;
@@ -1217,40 +1472,54 @@ function renderCharacter(){
 
   const available = SECTIONS.filter(sec => data[sec.id] && data[sec.id].ok);
   const extraKeys = Object.keys(data).filter(k => data[k].ok && !SECTIONS.some(sec => sec.id === k) && k !== 'character-media');
+  const missing = Object.keys(data).filter(k => !data[k].ok);
+
+  const crest = media.avatar || media.inset
+    ? `<img src="${esc(media.avatar || media.inset)}" alt="" onerror="this.remove()">`
+    : SIGIL_SVG;
 
   let html = `
-    <div class="panel">
-      <div class="hero">
-        <div class="hero-art">${media.main ? `<img src="${esc(media.main)}" alt="${esc(s.name)} character render" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'placeholder',textContent:'⚔'}))">`
-                                          : media.avatar ? `<img src="${esc(media.avatar)}" alt="${esc(s.name)} avatar" style="max-height:160px;align-self:center">`
-                                          : `<div class="placeholder">⚔</div>`}</div>
-        <div class="hero-info">
+    <header class="banner${current.sample ? ' is-sample' : ''}">
+      ${current.sample ? `<div class="sample-flag"><i></i>Sample character<span class="sf-more"> · fictional data for preview, real lookups resume once Blizzard serves Forever data</span></div>` : ''}
+      <div class="banner-inner">
+        <div class="crest">${crest}</div>
+        <div class="ident">
           ${title ? `<p class="hero-title">${esc(title)}</p>` : ''}
-          <h2 class="hero-name" style="color:${classColor(s)}">${esc(s.name)}${sur ? ' <span style="color:var(--parchment)">' + esc(sur) + '</span>' : ''}</h2>
+          <h2 class="hero-name"><span class="first">${esc(s.name)}</span>${sur ? ' <span class="sur">' + esc(sur) + '</span>' : ''}</h2>
           <p class="hero-line">
-            <strong>${esc(nameOf(s.race))}</strong> ${s.active_spec ? esc(nameOf(s.active_spec)) + ' ' : ''}<strong>${esc(nameOf(s.character_class))}</strong>
-            ${s.guild ? ` · &lt;${esc(nameOf(s.guild))}&gt;` : ''}
+            ${s.level != null ? `Level ${esc(s.level)} ` : ''}<strong>${esc(nameOf(s.race))}</strong> ${s.active_spec ? esc(nameOf(s.active_spec)) + ' ' : ''}<strong class="cls-txt">${esc(nameOf(s.character_class))}</strong>
+            ${s.guild ? `<span class="guild">&lt;${esc(nameOf(s.guild))}&gt;</span>` : ''}
           </p>
           <div class="badges">
             ${faction ? `<span class="badge ${esc(faction)}">${esc(nameOf(s.faction))}</span>` : ''}
             <span class="badge">${esc(nameOf(s.realm) || current.realmSlug)}</span>
-            <span class="badge">${esc(region().toUpperCase())}</span>
-          </div>
-          <div class="facts">
-            ${facts.map(([k, v, big]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v${big ? ' big' : ''}">${esc(v)}</div></div>`).join('')}
+            <span class="badge">${esc(current.sample ? 'Sample' : region().toUpperCase())}</span>
           </div>
         </div>
+        <div class="tiles">
+          ${tiles.map(([k, v, tone]) => `<div class="tile${tone ? ' ' + tone : ''}"><span class="tk">${esc(k)}</span><span class="tv">${esc(v)}</span></div>`).join('')}
+        </div>
       </div>
-    </div>
+    </header>
 
-    <nav class="jump" aria-label="Sections">
-      ${available.map(sec => `<a href="#sec-${slugId(sec.id)}">${esc(sec.title)}</a>`).join('')}
-      ${extraKeys.map(k => `<a href="#sec-${slugId(k)}">${esc(labelize(k.replace(/[\/-]/g,' ')))}</a>`).join('')}
-      <a href="#sec-unavailable">Unavailable</a>
-      <a href="#sec-raw">Raw JSON</a>
-    </nav>
+    <div class="char-layout">
+      <aside class="toc">
+        <p class="toc-title">On this page</p>
+        <nav class="jump" aria-label="Sections">
+          ${facts.length ? `<a href="#sec-overview">Overview</a>` : ''}
+          ${available.map(sec => `<a href="#sec-${slugId(sec.id)}">${esc(sec.title)}</a>`).join('')}
+          ${extraKeys.map(k => `<a href="#sec-${slugId(k)}">${esc(labelize(k.replace(/[\/-]/g,' ')))}</a>`).join('')}
+          ${missing.length ? `<a href="#sec-unavailable">Unavailable</a>` : ''}
+          <a href="#sec-raw">Raw data</a>
+        </nav>
+      </aside>
+      <div class="char-main">
   `;
 
+  if(facts.length){
+    html += sectionPanel('overview', 'Overview',
+      `<div class="kv">${facts.map(([k, v]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('')}</div>`);
+  }
   available.forEach(sec => {
     let body;
     try{ body = sec.render(data[sec.id].json); }
@@ -1260,21 +1529,20 @@ function renderCharacter(){
   extraKeys.forEach(k => {
     html += sectionPanel(k, labelize(k.replace(/[\/-]/g,' ')), renderGenericSection(data[k].json));
   });
-
-  const missing = Object.keys(data).filter(k => !data[k].ok);
-  html += sectionPanel('unavailable', 'Not Available', missing.length
-    ? `<p class="field-hint" style="margin-top:0">Blizzard didn't return these for this character. Forever may not support them yet, or the character has no data for them.</p>
-       <div class="chips">${missing.map(k => `<span>${esc(k)} <span class="muted" style="color:var(--sepia)">· ${data[k].status || 'network'}</span></span>`).join('')}</div>`
-    : `<p class="na">Every endpoint returned data.</p>`);
-
+  if(missing.length){
+    html += sectionPanel('unavailable', 'Not available',
+      `<p class="field-hint" style="margin-top:0">Blizzard didn't return these for this character. Forever may not support them yet, or the character has no data for them.</p>
+       <div class="chips">${missing.map(k => `<span>${esc(k)} <span style="color:var(--dim)">· ${data[k].status || 'network'}</span></span>`).join('')}</div>`);
+  }
   const rawKeys = ['summary', ...Object.keys(data).filter(k => data[k].ok)];
-  html += sectionPanel('raw', 'Raw JSON', `
+  html += sectionPanel('raw', 'Raw data', `
     <div class="raw-tools">
-      <select id="rawPick">${rawKeys.map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('')}</select>
+      <select id="rawPick" aria-label="Data set">${rawKeys.map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('')}</select>
       <button class="ghost" id="copyRaw" type="button">Copy</button>
       <button class="ghost" id="dlRaw" type="button">Download all (.json)</button>
     </div>
     <pre class="raw" id="rawView"></pre>`);
+  html += `</div></div>`;
 
   el.results.innerHTML = html;
   wireRaw();
@@ -1307,7 +1575,7 @@ function wireRaw(){
   pick.addEventListener('change', show); show();
   $('copyRaw').addEventListener('click', e => { try{ navigator.clipboard.writeText(view.textContent); e.target.textContent = 'Copied'; }catch(err){} });
   $('dlRaw').addEventListener('click', () => {
-    const all = { region: region(), realm: current.realmSlug, fetched_at: new Date().toISOString(), summary: current.summary };
+    const all = { region: region(), realm: current.realmSlug, fetched_at: new Date().toISOString(), sample: !!current.sample, summary: current.summary };
     Object.keys(current.data).forEach(k => { if(current.data[k].ok) all[k] = current.data[k].json; });
     const blob = new Blob([JSON.stringify(all, null, 2)], { type:'application/json' });
     const a = document.createElement('a');
@@ -1319,81 +1587,170 @@ function wireRaw(){
 }
 
 /* =======================================================================
-   RENDER: SECTIONS
+   RENDER: EQUIPMENT (paperdoll + list) and item tooltips
    ======================================================================= */
+const PD_LEFT  = ['HEAD','NECK','SHOULDER','BACK','CHEST','SHIRT','TABARD','WRIST'];
+const PD_RIGHT = ['HANDS','WAIST','LEGS','FEET','FINGER_1','FINGER_2','TRINKET_1','TRINKET_2'];
+const PD_BOTTOM= ['MAIN_HAND','OFF_HAND','RANGED'];
+const SLOT_NAMES = { HEAD:'Head', NECK:'Neck', SHOULDER:'Shoulder', BACK:'Back', CHEST:'Chest', SHIRT:'Shirt', TABARD:'Tabard',
+  WRIST:'Wrist', HANDS:'Hands', WAIST:'Waist', LEGS:'Legs', FEET:'Feet', FINGER_1:'Finger', FINGER_2:'Finger',
+  TRINKET_1:'Trinket', TRINKET_2:'Trinket', MAIN_HAND:'Main Hand', OFF_HAND:'Off Hand', RANGED:'Ranged' };
+
+function qualityOf(it){ return (it && it.quality && it.quality.type) || 'COMMON'; }
+function ilvlOf(it){ return it && it.level ? (it.level.value != null ? it.level.value : it.level) : null; }
+
+/* Item detail lines, in in-game tooltip order. Returns [{cls, html}] */
+function itemLines(it){
+  const L = [];
+  const add = (cls, text) => { if(text) L.push({ cls, html: esc(text) }); };
+  const row = (cls, left, right) => { if(left || right) L.push({ cls: 'row ' + (cls || ''), html: `<span>${esc(left || '')}</span><span>${esc(right || '')}</span>` }); };
+  add('g', nameOf(it.name_description));
+  if(it.level) add('y', nameOf(it.level) || ('Item Level ' + ilvlOf(it)));
+  add('', nameOf(it.binding));
+  add('', nameOf(it.unique_equipped));
+  row('', nameOf(it.inventory_type), nameOf(it.item_subclass));
+  if(it.weapon){
+    row('', nameOf(it.weapon.damage), nameOf(it.weapon.attack_speed));
+    add('', nameOf(it.weapon.dps));
+  }
+  if(it.armor) add('', nameOf(it.armor.display) || nameOf(it.armor) || (it.armor.value + ' Armor'));
+  (it.stats || []).forEach(st => {
+    const txt = nameOf(st.display) || `+${st.value} ${nameOf(st.type)}`;
+    const c = st.display && st.display.color;
+    const green = c && c.g > 200 && c.r < 100;
+    add(st.is_negated ? 'gray' : (green ? 'g' : ''), txt);
+  });
+  (it.enchantments || []).forEach(en => add('g', en.display_string || nameOf(en.source_item) || 'Enchanted'));
+  (it.sockets || []).forEach(so => L.push({ cls:'socket', html: `<i class="gem"></i>${esc(so.display_string || nameOf(so.item) || (nameOf(so.socket_type) + ' Socket'))}` }));
+  add('', nameOf(it.durability));
+  if(it.requirements){
+    const r = it.requirements;
+    [r.level, r.playable_classes, r.skill, r.reputation].forEach(x => add('', nameOf(x)));
+  }
+  (it.spells || []).forEach(sp => add('g', sp.description || nameOf(sp.spell)));
+  if(it.set){
+    const set = it.set;
+    add('y set-name', nameOf(set.display_string ? set : set.item_set));
+    (set.items || []).forEach(si => add(si.is_equipped ? 'set-piece on' : 'set-piece', '  ' + nameOf(si.item)));
+    (set.effects || []).forEach(ef => add(ef.is_active ? 'g' : 'gray', ef.display_string));
+  }
+  if(it.transmog) add('transmog', nameOf(it.transmog));
+  if(it.description) add('y flav', `"${it.description}"`);
+  if(it.sell_price && it.sell_price.display_strings){
+    const p = it.sell_price.display_strings;
+    add('', `Sell price: ${[p.gold && p.gold + 'g', p.silver && p.silver + 's', p.copper && p.copper + 'c'].filter(Boolean).join(' ')}`);
+  }
+  return L;
+}
+
+function tooltipHTML(it){
+  const q = qualityOf(it);
+  return `<div class="tt-name q-${esc(q)}">${esc(it.name || ('Item #' + (it.item && it.item.id)))}</div>` +
+    itemLines(it).map(l => `<div class="tt-l ${l.cls}">${l.html}</div>`).join('');
+}
+
+function shortEnchant(it){
+  const en = (it.enchantments || [])[0];
+  if(!en) return '';
+  return (en.display_string || '').replace(/^Enchanted:\s*/i, '');
+}
+
+function pdSlot(type, entry, side){
+  if(!entry){
+    return `<div class="pd-slot pd-empty ${side}"><span class="pd-icon"></span><span class="pd-text"><span class="pd-name">Empty</span><span class="pd-meta">${esc(SLOT_NAMES[type] || labelize(type.toLowerCase()))}</span></span></div>`;
+  }
+  const { it, i } = entry;
+  const q = qualityOf(it);
+  const ench = shortEnchant(it);
+  const sockets = (it.sockets || []).length;
+  return `<button type="button" class="pd-slot ${side}" data-q="${esc(q)}" data-item="${i}" aria-label="${esc(it.name || 'Item')}, ${esc(SLOT_NAMES[type] || type)}">
+    <span class="pd-icon" data-icon="${i}">${ilvlOf(it) != null ? `<b>${esc(ilvlOf(it))}</b>` : ''}</span>
+    <span class="pd-text">
+      <span class="pd-name">${esc(it.name || ('Item #' + (it.item && it.item.id)))}</span>
+      <span class="pd-meta">${esc(SLOT_NAMES[type] || nameOf(it.slot))}${ench ? ` · <em>${esc(ench)}</em>` : ''}${sockets ? ` · ${'◆'.repeat(Math.min(sockets, 3))}` : ''}</span>
+    </span>
+  </button>`;
+}
+
 function renderEquipment(d){
   const items = (d.equipped_items || []).slice().sort((a, b) => {
     const ai = SLOT_ORDER.indexOf(a.slot && a.slot.type), bi = SLOT_ORDER.indexOf(b.slot && b.slot.type);
     return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
   });
+  current._sortedItems = items;
   if(!items.length) return '<p class="na">No equipped items.</p>';
-  let html = '<div class="gear">' + items.map((it, i) => {
-    const q = (it.quality && it.quality.type) || 'COMMON';
-    const lines = [];
-    if(it.name_description) lines.push(`<li class="green">${esc(nameOf(it.name_description))}</li>`);
-    if(it.binding) lines.push(`<li>${esc(nameOf(it.binding))}</li>`);
-    if(it.unique_equipped) lines.push(`<li>${esc(nameOf(it.unique_equipped))}</li>`);
-    const typeLine = [nameOf(it.inventory_type), nameOf(it.item_subclass)].filter(Boolean).join(' · ');
-    if(typeLine) lines.push(`<li class="muted">${esc(typeLine)}</li>`);
-    if(it.weapon){
-      const w = it.weapon;
-      if(w.damage) lines.push(`<li>${esc(nameOf(w.damage))}</li>`);
-      if(w.attack_speed) lines.push(`<li class="muted">${esc(nameOf(w.attack_speed))}</li>`);
-      if(w.dps) lines.push(`<li class="muted">${esc(nameOf(w.dps))}</li>`);
-    }
-    if(it.armor) lines.push(`<li>${esc(nameOf(it.armor.display) || nameOf(it.armor) || it.armor.value + ' Armor')}</li>`);
-    (it.stats || []).forEach(st => {
-      const txt = nameOf(st.display) || `+${st.value} ${nameOf(st.type)}`;
-      const isGreen = st.display && st.display.color && st.display.color.g > 200 && st.display.color.r < 100;
-      lines.push(`<li class="${st.is_negated ? 'muted' : (isGreen ? 'green' : '')}">${esc(txt)}</li>`);
-    });
-    (it.enchantments || []).forEach(en => lines.push(`<li class="ench">${esc(en.display_string || nameOf(en.source_item) || 'Enchanted')}</li>`));
-    (it.sockets || []).forEach(so => lines.push(`<li class="socket">◆ ${esc(so.display_string || nameOf(so.item) || (nameOf(so.socket_type) + ' Socket'))}</li>`));
-    (it.spells || []).forEach(sp => lines.push(`<li class="green">${esc(sp.description || nameOf(sp.spell))}</li>`));
-    if(it.set){
-      const set = it.set;
-      lines.push(`<li class="set">${esc(nameOf(set.display_string ? set : set.item_set))}</li>`);
-      (set.effects || []).forEach(ef => lines.push(`<li class="set${ef.is_active ? '' : ' off'}"><span class="${ef.is_active ? '' : 'off'}">${esc(ef.display_string)}</span></li>`));
-    }
-    if(it.requirements){
-      const r = it.requirements;
-      [r.level, r.playable_classes, r.skill, r.reputation].forEach(x => { if(x && nameOf(x)) lines.push(`<li class="muted">${esc(nameOf(x))}</li>`); });
-    }
-    if(it.durability) lines.push(`<li class="muted">${esc(nameOf(it.durability))}</li>`);
-    if(it.transmog) lines.push(`<li style="color:#ff80ff">${esc(nameOf(it.transmog))}</li>`);
-    if(it.description) lines.push(`<li class="flav">"${esc(it.description)}"</li>`);
-    const itemId = it.item && it.item.id;
+
+  const bySlot = {};
+  items.forEach((it, i) => { const t = it.slot && it.slot.type; if(t && !bySlot[t]) bySlot[t] = { it, i }; });
+  const placed = new Set([...PD_LEFT, ...PD_RIGHT, ...PD_BOTTOM]);
+  const extras = items.map((it, i) => ({ it, i })).filter(e => !placed.has(e.it.slot && e.it.slot.type));
+  const media = current._media || {};
+  const ilvl = current.summary && current.summary.equipped_item_level;
+
+  const model = media.main
+    ? `<img src="${esc(media.main)}" alt="${esc(current.summary.name)} character model" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'pd-placeholder'}))">`
+    : `<div class="pd-placeholder"></div>`;
+
+  const paperdoll = `
+    <div class="pd">
+      <div class="pd-col pd-left">${PD_LEFT.map(t => pdSlot(t, bySlot[t], 'l')).join('')}</div>
+      <div class="pd-model">
+        ${model}
+        ${ilvl != null ? `<div class="pd-ilvl"><span>Item level</span><b>${esc(ilvl)}</b></div>` : ''}
+      </div>
+      <div class="pd-col pd-right">${PD_RIGHT.map(t => pdSlot(t, bySlot[t], 'r')).join('')}</div>
+      <div class="pd-bottom">${PD_BOTTOM.map(t => pdSlot(t, bySlot[t], 'b')).join('')}${extras.map(e => pdSlot(e.it.slot.type, e, 'b')).join('')}</div>
+    </div>`;
+
+  const list = `<div class="gear">${items.map((it, i) => {
+    const q = qualityOf(it);
     return `<div class="item">
-      <div class="icon b-${esc(q)}" data-icon="${i}" title="Item ${esc(itemId || '')}"></div>
+      <div class="icon" data-icon="${i}"></div>
       <div>
         <div class="slot">${esc(nameOf(it.slot))}</div>
-        <div class="iname q-${esc(q)}">${esc(it.name || ('Item #' + itemId))}</div>
-        ${it.level ? `<div class="ilvl">${esc(nameOf(it.level) || ('Item Level ' + it.level.value))}</div>` : ''}
-        <ul>${lines.join('')}</ul>
+        <div class="iname q-${esc(q)}">${esc(it.name || ('Item #' + (it.item && it.item.id)))}</div>
+        <ul>${itemLines(it).map(l => `<li class="tt-l ${l.cls}">${l.html}</li>`).join('')}</ul>
       </div>
     </div>`;
-  }).join('') + '</div>';
+  }).join('')}</div>`;
+
+  let sets = '';
   if(d.equipped_item_sets && d.equipped_item_sets.length){
-    html += `<div class="sub-h">Equipped sets</div><div class="chips">${d.equipped_item_sets.map(s => `<span>${esc(nameOf(s.display_string ? s : s.item_set))}</span>`).join('')}</div>`;
+    sets = `<div class="sub-h">Equipped sets</div><div class="chips">${d.equipped_item_sets.map(s => `<span>${esc(nameOf(s.display_string ? s : s.item_set))}</span>`).join('')}</div>`;
   }
-  current._sortedItems = items;
-  return html;
+
+  return `<div class="gear-view" data-view="doll">
+    <div class="viewtog" role="group" aria-label="Equipment view">
+      <button type="button" data-v="doll" aria-pressed="true">Paperdoll</button><button type="button" data-v="list" aria-pressed="false">Full list</button>
+    </div>
+    <div class="view-doll">${paperdoll}</div>
+    <div class="view-list">${list}</div>
+    ${sets}
+  </div>`;
 }
 
 async function loadItemIcons(){
   const items = current && current._sortedItems;
   if(!items) return;
+  const apply = (i, url) => {
+    const img = new Image();
+    img.onload = () => el.results.querySelectorAll(`[data-icon="${i}"]`).forEach(n => { n.style.backgroundImage = `url("${url.replace(/"/g, '')}")`; n.classList.add('has-img'); });
+    img.src = url;
+  };
   await pool(items.map((it, i) => ({ it, i })), 6, async ({ it, i }) => {
+    if(it._icon){ const u = safeUrl(it._icon); if(u) apply(i, u); return; }
     const href = it.media && it.media.key && it.media.key.href;
     if(!href) return;
     const res = await api(href);
     const icon = res.ok && res.json && (res.json.assets || []).find(a => a.key === 'icon');
     const url = icon && safeUrl(icon.value);
-    const node = el.results.querySelector(`[data-icon="${i}"]`);
-    if(url && node) node.style.backgroundImage = `url("${url.replace(/"/g, '')}")`;
+    if(url) apply(i, url);
   });
 }
 
+/* =======================================================================
+   RENDER: SECTIONS
+   ======================================================================= */
 function statValue(v){
   if(v == null) return null;
   if(typeof v === 'number') return Number.isInteger(v) ? fmtNum(v) : v.toFixed(2);
@@ -1407,14 +1764,29 @@ function statValue(v){
   const n = nameOf(v); if(n) return esc(n);
   return null;
 }
+/* In-game character sheet: stats grouped the way the game groups them. */
+const STAT_GROUPS = [
+  ['Attributes', /^(health|power|power_type|strength|agility|intellect|stamina|spirit)$/],
+  ['Melee',      /melee|main_hand|off_hand|^attack_power$|expertise|^hit/],
+  ['Ranged',     /ranged/],
+  ['Spell',      /spell|mana|healing|bonus_heal/],
+  ['Defense',    /armor|dodge|parry|block|resist|defense|avoidance/],
+  ['Enhancements', /crit|haste|mastery|versatility|speed|leech|lifesteal/],
+];
 function renderStats(d){
-  const rows = [];
+  const groups = STAT_GROUPS.map(([name]) => ({ name, rows: [] }));
+  const other = { name: 'Other', rows: [] };
   for(const [k, v] of Object.entries(d)){
     if(k === '_links' || k === 'character') continue;
     const sv = statValue(v);
-    if(sv != null) rows.push(`<div class="fact"><div class="k">${esc(labelize(k))}</div><div class="v">${sv}</div></div>`);
+    if(sv == null) continue;
+    const row = `<div class="fact"><div class="k">${esc(labelize(k))}</div><div class="v">${sv}</div></div>`;
+    const gi = STAT_GROUPS.findIndex(([, re]) => re.test(k));
+    (gi >= 0 ? groups[gi] : other).rows.push(row);
   }
-  return rows.length ? `<div class="kv">${rows.join('')}</div>` : renderGenericSection(d);
+  const all = [...groups, other].filter(g => g.rows.length);
+  if(!all.length) return renderGenericSection(d);
+  return `<div class="sheet">${all.map(g => `<div class="sheet-card"><h4>${esc(g.name)}</h4>${g.rows.join('')}</div>`).join('')}</div>`;
 }
 
 function talentCard(name, rank, desc){
@@ -1473,10 +1845,20 @@ function renderTalents(d){
   return renderGenericSection(d);
 }
 
-function bar(label, val, max, extra){
+/* Warcraft Logs-style colour by completion: grey → green → blue → purple → orange → gold */
+function rankColor(frac){
+  if(frac >= 1) return '#e5cc80';
+  if(frac >= .95) return '#ff8000';
+  if(frac >= .75) return '#a335ee';
+  if(frac >= .5)  return '#2b8cff';
+  if(frac >= .25) return '#1eff00';
+  return '#9d9d9d';
+}
+function bar(label, val, max, extra, color){
   const pct = max ? Math.max(0, Math.min(100, (val / max) * 100)) : 0;
+  const style = `width:${pct}%` + (color ? `;--barc:${color}` : '');
   return `<div class="barrow"><span class="lbl">${label}</span><span class="val">${extra != null ? extra : `${fmtNum(val)} / ${fmtNum(max)}`}</span>
-    <div class="track"><div class="${pct >= 100 ? 'done' : ''}" style="width:${pct}%"></div></div></div>`;
+    <div class="track"><div class="${pct >= 100 && !color ? 'done' : ''}" style="${style}"></div></div></div>`;
 }
 
 function renderProfessions(d){
@@ -1505,13 +1887,17 @@ function renderProfessions(d){
   return html || renderGenericSection(d);
 }
 
+/* WoW reputation standing colours */
+const STANDING_COLORS = { hated:'#cc2222', hostile:'#ff3b30', unfriendly:'#ee6622', neutral:'#ffd100',
+  friendly:'#22d322', honored:'#00e08a', revered:'#00e0c0', exalted:'#00d5ff' };
 function renderReputations(d){
   const reps = d.reputations || [];
   if(!reps.length) return renderGenericSection(d);
-  return `<div class="bars">${reps.map(r => {
+  return `<div class="bars reps">${reps.map(r => {
     const st = r.standing || {};
-    const extra = `${esc(st.name || '')}${st.max ? ` · ${fmtNum(st.value)} / ${fmtNum(st.max)}` : ''}`;
-    return bar(esc(nameOf(r.faction)), st.value || 0, st.max || 0, extra);
+    const color = STANDING_COLORS[(st.name || '').toLowerCase()] || null;
+    const extra = `<span class="standing" style="color:${color || 'var(--ash)'}">${esc(st.name || '')}</span>${st.max ? ` · ${fmtNum(st.value)} / ${fmtNum(st.max)}` : ''}`;
+    return bar(esc(nameOf(r.faction)), st.value || 0, st.max || 0, extra, color);
   }).join('')}</div>`;
 }
 
@@ -1520,17 +1906,21 @@ function renderEncounters(d){
   if(!exps.length) return '<p class="na">No progress recorded yet.</p>';
   let html = '';
   exps.forEach(ex => {
-    html += `<div class="sub-h">${esc(nameOf(ex.expansion) || 'Instances')}</div>`;
+    html += `<div class="sub-h">${esc(nameOf(ex.expansion) || 'Instances')}</div><div class="insts">`;
     (ex.instances || []).forEach(inst => {
       html += `<div class="inst"><h5>${esc(nameOf(inst.instance))}</h5><div class="bars">`;
       (inst.modes || []).forEach(m => {
         const p = m.progress || {};
-        html += bar(`${esc(nameOf(m.difficulty))}${m.status ? ` <span style="color:var(--sepia)">· ${esc(nameOf(m.status))}</span>` : ''}`, p.completed_count || 0, p.total_count || 0);
+        const frac = p.total_count ? (p.completed_count || 0) / p.total_count : 0;
+        const c = rankColor(frac);
+        html += bar(`${esc(nameOf(m.difficulty))}${m.status ? ` <span style="color:var(--ash)">· ${esc(nameOf(m.status))}</span>` : ''}`,
+          p.completed_count || 0, p.total_count || 0, `<b style="color:${c}">${fmtNum(p.completed_count || 0)}/${fmtNum(p.total_count || 0)}</b>`, c);
         const encs = (p.encounters || []).map(e => `${esc(nameOf(e.encounter))} ×${e.completed_count}${e.last_kill_timestamp ? ` (last ${new Date(e.last_kill_timestamp).toLocaleDateString()})` : ''}`);
         if(encs.length) html += `<div class="enc">${encs.join(' · ')}</div>`;
       });
       html += '</div></div>';
     });
+    html += '</div>';
   });
   return html;
 }
@@ -1746,7 +2136,16 @@ document.addEventListener('keydown', e => {
 let revealObs = null, spyObs = null;
 function enhanceResults(){
   // spotlight targets
-  el.results.querySelectorAll('.item, .match, .talent, .inst').forEach(n => n.classList.add('spot'));
+  el.results.querySelectorAll('.item, .match, .talent, .inst, .sheet-card').forEach(n => n.classList.add('spot'));
+
+  // equipment: paperdoll / list toggle
+  el.results.querySelectorAll('.gear-view').forEach(gv => {
+    const btns = gv.querySelectorAll('.viewtog button');
+    btns.forEach(b => b.addEventListener('click', () => {
+      gv.dataset.view = b.dataset.v;
+      btns.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    }));
+  });
 
   // gear cards: collapse long detail lists, expand on click / Enter
   el.results.querySelectorAll('.item').forEach(card => {
@@ -1800,6 +2199,184 @@ function enhanceResults(){
     byId.forEach((a, id) => { const t = document.getElementById(id); if(t) spyObs.observe(t); });
   }
 }
+
+/* =======================================================================
+   ITEM TOOLTIP (in-game style). Hover with a mouse; tap or Enter elsewhere.
+   ======================================================================= */
+const tt = document.createElement('div');
+tt.id = 'tt'; tt.setAttribute('role', 'tooltip'); tt.hidden = true;
+document.body.appendChild(tt);
+let ttPinned = false;
+
+function ttShow(idx, x, y, pinned){
+  const it = current && current._sortedItems && current._sortedItems[idx];
+  if(!it) return;
+  ttPinned = !!pinned;
+  tt.classList.toggle('pinned', ttPinned);
+  tt.innerHTML = tooltipHTML(it) + (ttPinned ? '<button type="button" class="tt-close" aria-label="Close">×</button>' : '');
+  tt.hidden = false;
+  if(!ttPinned) ttMove(x, y);
+  requestAnimationFrame(() => tt.classList.add('on'));
+}
+function ttMove(x, y){
+  if(ttPinned) return;
+  const pad = 18, w = tt.offsetWidth, h = tt.offsetHeight;
+  let left = x + pad, top = y + pad;
+  if(left + w > innerWidth - 8) left = x - w - pad;
+  if(top + h > innerHeight - 8) top = Math.max(8, innerHeight - h - 8);
+  tt.style.left = Math.max(8, left) + 'px'; tt.style.top = Math.max(8, top) + 'px';
+}
+function ttHide(){ tt.classList.remove('on'); tt.hidden = true; ttPinned = false; }
+
+const canHover = () => { try{ return matchMedia('(hover: hover)').matches; }catch(e){ return true; } };
+document.addEventListener('pointerover', e => {
+  if(e.pointerType !== 'mouse' || !canHover()) return;
+  const slot = e.target.closest && e.target.closest('[data-item]');
+  if(slot && !ttPinned) ttShow(+slot.dataset.item, e.clientX, e.clientY, false);
+});
+document.addEventListener('pointermove', e => { if(e.pointerType === 'mouse' && !tt.hidden && !ttPinned) ttMove(e.clientX, e.clientY); }, { passive:true });
+document.addEventListener('pointerout', e => {
+  if(e.pointerType !== 'mouse' || ttPinned) return;
+  const slot = e.target.closest && e.target.closest('[data-item]');
+  if(slot && !slot.contains(e.relatedTarget)) ttHide();
+});
+document.addEventListener('click', e => {
+  if(e.target.closest('.tt-close')){ ttHide(); return; }
+  const slot = e.target.closest('[data-item]');
+  if(slot){
+    // touch / keyboard: pin the tooltip as a sheet
+    if(!canHover() || e.detail === 0){ ttShow(+slot.dataset.item, 0, 0, true); }
+    return;
+  }
+  if(ttPinned && !e.target.closest('#tt')) ttHide();
+});
+document.addEventListener('focusin', e => {
+  const slot = e.target.closest && e.target.closest('[data-item]');
+  if(slot && slot.matches(':focus-visible')){ const r = slot.getBoundingClientRect(); ttShow(+slot.dataset.item, r.right, r.top, false); }
+});
+document.addEventListener('focusout', e => { if(e.target.closest && e.target.closest('[data-item]') && !ttPinned) ttHide(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') ttHide(); });
+addEventListener('scroll', () => { if(!ttPinned && !tt.hidden) ttHide(); }, { passive:true });
+
+/* =======================================================================
+   SAMPLE CHARACTER — fictional, clearly labelled, so the armory can be
+   explored while Blizzard isn't serving Forever data.
+   ======================================================================= */
+const ICON = n => `https://render.worldofwarcraft.com/us/icons/56/${n}.jpg`;
+function sItem(slot, slotName, name, q, ilvl, extra){
+  return Object.assign({
+    slot: { type: slot, name: slotName }, quality: { type: q }, name,
+    level: { value: ilvl, display_string: `Item Level ${ilvl}` },
+    binding: { name: 'Binds when picked up' },
+  }, extra || {});
+}
+const st = (n, v, green) => ({ type:{ name:n }, value:v, display:{ display_string: green ? n : `+${v} ${n}`, color: green ? { r:0, g:255, b:0 } : { r:255, g:255, b:255 } } });
+const VIGIL_SET = { item_set:{ name:'Vestments of the Ember Vigil' }, display_string:'Vestments of the Ember Vigil (3/5)',
+  items:[ { item:{ name:'Crown of the Ember Vigil' }, is_equipped:true }, { item:{ name:'Pauldrons of the Ember Vigil' }, is_equipped:true },
+          { item:{ name:'Breastplate of the Ember Vigil' }, is_equipped:true }, { item:{ name:'Gauntlets of the Ember Vigil' } }, { item:{ name:'Greaves of the Ember Vigil' } } ],
+  effects:[ { display_string:'(2) Set: Increases your chance to block attacks with a shield by 2%.', is_active:true },
+            { display_string:'(3) Set: Your Judgements restore 3% of your base mana.', is_active:true },
+            { display_string:'(5) Set: Increases damage done by Holy spells by up to 25.', is_active:false } ] };
+const plate = (n) => ({ inventory_type:{ name:n }, item_subclass:{ name:'Plate' } });
+
+const SAMPLE = {
+  summary: {
+    name:'Aldric', surname:'Ashvane', level:60, gender:{ name:'Male' },
+    faction:{ type:'ALLIANCE', name:'Alliance' }, race:{ name:'Dwarf' }, character_class:{ name:'Paladin' }, active_spec:{ name:'Retribution' },
+    realm:{ name:'Sample Realm', slug:'sample-realm' }, guild:{ name:'The Ledger Keepers' },
+    achievement_points:2140, equipped_item_level:63, average_item_level:64, experience:0,
+    last_login_timestamp: Date.now() - 3 * 3600 * 1000,
+    active_title:{ name:'the Steadfast', display_string:'{name} the Steadfast' },
+    gameplay_style:{ name:'Normal' }
+  },
+  data: {
+    equipment: { equipped_items: [
+      sItem('HEAD','Head','Crown of the Ember Vigil','EPIC',66, Object.assign(plate('Head'), { _icon:ICON('inv_helmet_03'), armor:{ display:{ display_string:'781 Armor' } },
+        stats:[st('Strength',26), st('Stamina',22), st('Intellect',14), st('Equip: Improves your chance to get a critical strike by 1%.',0,true)],
+        sockets:[{ display_string:'+8 Strength' }], set: VIGIL_SET, durability:{ display_string:'Durability 100 / 100' } })),
+      sItem('NECK','Neck','Amulet of the Silent Watch','RARE',61, { inventory_type:{ name:'Neck' }, _icon:ICON('inv_jewelry_necklace_07'), stats:[st('Strength',12), st('Stamina',10)] }),
+      sItem('SHOULDER','Shoulder','Pauldrons of the Ember Vigil','EPIC',66, Object.assign(plate('Shoulder'), { _icon:ICON('inv_shoulder_15'), armor:{ display:{ display_string:'721 Armor' } },
+        stats:[st('Strength',20), st('Stamina',18), st('Agility',9)], set: VIGIL_SET, enchantments:[{ display_string:'Enchanted: +8 Strength' }] })),
+      sItem('BACK','Back','Mantle of the Northern Pass','RARE',60, { inventory_type:{ name:'Back' }, item_subclass:{ name:'Cloth' }, _icon:ICON('inv_misc_cape_11'),
+        armor:{ display:{ display_string:'56 Armor' } }, stats:[st('Agility',8), st('Stamina',11)], enchantments:[{ display_string:'Enchanted: +3 Agility' }] }),
+      sItem('CHEST','Chest','Breastplate of the Ember Vigil','EPIC',66, Object.assign(plate('Chest'), { _icon:ICON('inv_chest_plate16'), armor:{ display:{ display_string:'961 Armor' } },
+        stats:[st('Strength',28), st('Stamina',24), st('Intellect',12)], set: VIGIL_SET, enchantments:[{ display_string:'Enchanted: +4 All Stats' }], durability:{ display_string:'Durability 165 / 165' } })),
+      sItem('SHIRT','Shirt','Thick Embroidered Shirt','COMMON',40, { binding:null, inventory_type:{ name:'Shirt' }, _icon:ICON('inv_shirt_white_01') }),
+      sItem('TABARD','Tabard','Tabard of the Ledger Keepers','UNCOMMON',45, { inventory_type:{ name:'Tabard' }, _icon:ICON('inv_shirt_guildtabard_01') }),
+      sItem('WRIST','Wrist','Vambraces of Quiet Resolve','RARE',60, Object.assign(plate('Wrist'), { _icon:ICON('inv_bracer_14'), armor:{ display:{ display_string:'371 Armor' } },
+        stats:[st('Strength',11), st('Stamina',9)], enchantments:[{ display_string:'Enchanted: +9 Strength' }] })),
+      sItem('HANDS','Hands','Gauntlets of the Iron Hearth','EPIC',63, Object.assign(plate('Hands'), { _icon:ICON('inv_gauntlets_29'), armor:{ display:{ display_string:'534 Armor' } },
+        stats:[st('Strength',18), st('Stamina',15), st('Equip: Improves your chance to hit by 1%.',0,true)], enchantments:[{ display_string:'Enchanted: +7 Strength' }] })),
+      sItem('WAIST','Waist','Girdle of Measured Steps','RARE',61, Object.assign(plate('Waist'), { _icon:ICON('inv_belt_09'), armor:{ display:{ display_string:'463 Armor' } }, stats:[st('Strength',15), st('Stamina',12)] })),
+      sItem('LEGS','Legs','Legplates of the First Charge','EPIC',66, Object.assign(plate('Legs'), { _icon:ICON('inv_pants_plate_06'), armor:{ display:{ display_string:'841 Armor' } },
+        stats:[st('Strength',27), st('Stamina',22), st('Agility',10)] })),
+      sItem('FEET','Feet','Sabatons of the Long Road','RARE',61, Object.assign(plate('Feet'), { _icon:ICON('inv_boots_plate_06'), armor:{ display:{ display_string:'589 Armor' } },
+        stats:[st('Strength',14), st('Stamina',13)], enchantments:[{ display_string:'Enchanted: Minor Speed Increase' }] })),
+      sItem('FINGER_1','Finger','Band of the Patient Flame','EPIC',63, { inventory_type:{ name:'Finger' }, _icon:ICON('inv_jewelry_ring_15'), unique_equipped:{ name:'Unique' },
+        stats:[st('Strength',11), st('Stamina',9), st('Equip: Improves your chance to get a critical strike by 1%.',0,true)] }),
+      sItem('FINGER_2','Finger','Signet of the Quarry Lord','RARE',60, { inventory_type:{ name:'Finger' }, _icon:ICON('inv_jewelry_ring_31'), stats:[st('Agility',9), st('Stamina',10)] }),
+      sItem('TRINKET_1','Trinket','Ember of the Last Watch','EPIC',65, { inventory_type:{ name:'Trinket' }, _icon:ICON('inv_misc_gem_bloodstone_01'), unique_equipped:{ name:'Unique' },
+        spells:[{ description:'Use: Increases your attack power by 260 for 20 sec. (2 Min Cooldown)' }] }),
+      sItem('TRINKET_2','Trinket','Ledger-Keeper\'s Token','RARE',60, { inventory_type:{ name:'Trinket' }, _icon:ICON('inv_misc_rune_06'),
+        spells:[{ description:'Equip: Increases attack power by 40.' }] }),
+      sItem('MAIN_HAND','Main Hand','Oathbreaker\'s Greatsword','EPIC',66, { inventory_type:{ name:'Two-Hand' }, item_subclass:{ name:'Sword' }, _icon:ICON('inv_sword_39'),
+        weapon:{ damage:{ display_string:'184 - 277 Damage' }, attack_speed:{ display_string:'Speed 3.60' }, dps:{ display_string:'(64.0 damage per second)' } },
+        stats:[st('Strength',31), st('Stamina',22)], enchantments:[{ display_string:'Enchanted: Crusader' }],
+        durability:{ display_string:'Durability 120 / 120' }, description:'It remembers every promise made over its blade.' }),
+      sItem('RANGED','Relic','Libram of the Ember Vigil','RARE',60, { inventory_type:{ name:'Relic' }, item_subclass:{ name:'Libram' }, _icon:ICON('inv_relics_libramofhope'),
+        spells:[{ description:'Equip: Increases the damage done by your Judgements by 20.' }] }),
+    ]},
+    statistics: { health:5420, power:4180, power_type:{ name:'Mana' },
+      strength:{ base:118, effective:402 }, agility:{ base:62, effective:121 }, intellect:{ base:71, effective:139 }, stamina:{ base:110, effective:351 }, spirit:{ base:78, effective:84 },
+      attack_power:1104, melee_crit:{ value:18.42 }, melee_haste:{ value:0 }, spell_crit:{ value:6.11 },
+      armor:{ base:6890, effective:6890 }, dodge:{ value:5.3 }, parry:{ value:6.0 }, block:{ value:5.0 } },
+    specializations: { specialization_groups:[ { is_active:true, specializations:[
+      { specialization_name:'Holy', spent_points:5, talents:[ { spell_tooltip:{ spell:{ name:'Divine Strength' }, description:'Increases your Strength by 10%.' }, talent_rank:5 } ] },
+      { specialization_name:'Protection', spent_points:15, talents:[
+        { spell_tooltip:{ spell:{ name:'Improved Devotion Aura' }, description:'Increases the armor bonus of your Devotion Aura by 25%.' }, talent_rank:5 },
+        { spell_tooltip:{ spell:{ name:'Precision' }, description:'Increases your chance to hit with melee weapons by 3%.' }, talent_rank:3 } ] },
+      { specialization_name:'Retribution', spent_points:31, talents:[
+        { spell_tooltip:{ spell:{ name:'Benediction' }, description:'Reduces the mana cost of your Judgement and Seal spells by 15%.' }, talent_rank:5 },
+        { spell_tooltip:{ spell:{ name:'Conviction' }, description:'Increases your chance to get a critical strike with melee weapons by 5%.' }, talent_rank:5 },
+        { spell_tooltip:{ spell:{ name:'Seal of Command' }, description:'Gives the Paladin a chance to deal additional Holy damage.' }, talent_rank:1 },
+        { spell_tooltip:{ spell:{ name:'Two-Handed Weapon Specialization' }, description:'Increases the damage you deal with two-handed melee weapons by 6%.' }, talent_rank:3 },
+        { spell_tooltip:{ spell:{ name:'Vengeance' }, description:'Gives you a 15% bonus to Physical and Holy damage after a critical strike.' }, talent_rank:5 },
+        { spell_tooltip:{ spell:{ name:'Repentance' }, description:'Puts the enemy target in a state of meditation.' }, talent_rank:1 } ] } ] } ] },
+    professions: { primaries:[ { profession:{ name:'Blacksmithing' }, skill_points:300, max_skill_points:300, known_recipes:[{ name:'Thorium Belt' },{ name:'Imperial Plate Chest' },{ name:'Dark Iron Pulverizer' }] },
+                               { profession:{ name:'Mining' }, skill_points:285, max_skill_points:300 } ],
+                   secondaries:[ { profession:{ name:'Cooking' }, skill_points:225, max_skill_points:300 }, { profession:{ name:'First Aid' }, skill_points:300, max_skill_points:300 } ] },
+    reputations: { reputations:[
+      { faction:{ name:'Ironforge' }, standing:{ value:999, max:1000, name:'Exalted' } },
+      { faction:{ name:'Stormwind' }, standing:{ value:14200, max:21000, name:'Revered' } },
+      { faction:{ name:'Argent Dawn' }, standing:{ value:6300, max:12000, name:'Honored' } },
+      { faction:{ name:'Timbermaw Hold' }, standing:{ value:2100, max:6000, name:'Friendly' } },
+      { faction:{ name:'Bloodsail Buccaneers' }, standing:{ value:1200, max:3000, name:'Unfriendly' } } ] },
+    'encounters/raids': { expansions:[ { expansion:{ name:'Forever' }, instances:[
+      { instance:{ name:'Barrow Deeps' }, modes:[ { difficulty:{ name:'Normal' }, status:{ name:'In progress' }, progress:{ completed_count:6, total_count:8 } } ] },
+      { instance:{ name:'Onyxia\'s Lair' }, modes:[ { difficulty:{ name:'Normal' }, status:{ name:'Complete' }, progress:{ completed_count:1, total_count:1 } } ] },
+      { instance:{ name:'Hyjal Summit' }, modes:[ { difficulty:{ name:'Normal' }, status:{ name:'In progress' }, progress:{ completed_count:2, total_count:9 } } ] } ] } ] },
+    achievements: { total_quantity:214, total_points:2140,
+      category_progress:[ { category:{ name:'General' }, quantity:38, points:380 }, { category:{ name:'Quests' }, quantity:61, points:610 },
+                          { category:{ name:'Exploration' }, quantity:44, points:440 }, { category:{ name:'Dungeons & Raids' }, quantity:52, points:520 },
+                          { category:{ name:'Professions' }, quantity:19, points:190 } ],
+      recent_events:[ { achievement:{ name:'Level 60' }, timestamp: Date.now() - 2 * 86400000 }, { achievement:{ name:'Exalted with Ironforge' }, timestamp: Date.now() - 5 * 86400000 } ] },
+    'pvp-summary': { honor_level:12, honorable_kills:1874 },
+    titles: { active_title:{ name:'the Steadfast' }, titles:[ { name:'the Steadfast' }, { name:'Sergeant' }, { name:'the Explorer' } ] },
+    'collections/mounts': { mounts:[ { mount:{ name:'Charger' } }, { mount:{ name:'Swift Gray Ram' } }, { mount:{ name:'Warhorse' } } ] }
+  }
+};
+
+function openSample(){
+  const data = {};
+  Object.entries(SAMPLE.data).forEach(([k, json]) => data[k] = { ok:true, status:200, json });
+  current = { summary: SAMPLE.summary, data, realmSlug:'sample-realm', name: SAMPLE.summary.name, sample:true };
+  ttHide();
+  renderCharacter();
+  loadItemIcons();
+  const top = el.results.getBoundingClientRect().top + scrollY - 12;
+  scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+}
+document.addEventListener('click', e => { if(e.target.closest('[data-sample]')){ e.preventDefault(); openSample(); } });
 
 function showIfForeverUnavailable(e){ if(e && e.message === FOREVER_UNAVAILABLE_MSG) setStatus(e.message, 'info'); }
 if(location.hash.length > 1) fromHash();

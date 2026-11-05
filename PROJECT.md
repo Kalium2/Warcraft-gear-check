@@ -58,6 +58,15 @@ README.md         Setup and deploy notes
   - region segmented control that drives the hidden `#region` select
   - `/` focuses the name field
   - API status pill (`setApiState`: checking / live / waiting / down)
+- **v3 armory components** (each takes a common WoW-site convention; no other site's branding is copied):
+  - Class-tinted banner: hex crest, `--cls` set from the class colour, and stat tiles.
+  - Sticky "On this page" sidebar on desktop; it becomes a top strip under 1000px.
+  - Equipment paperdoll (`PD_LEFT` / `PD_RIGHT` / `PD_BOTTOM`) around the character model, with a "Full list" toggle.
+  - In-game-style item tooltip (`#tt`, built by `itemLines` / `tooltipHTML`): follows the mouse on hover, pins as a sheet on touch or Enter.
+  - Character sheet grouped by `STAT_GROUPS`.
+  - Raid progress coloured by `rankColor` (grey → green → blue → purple → orange → gold); reputations in WoW standing colours (`STANDING_COLORS`).
+- **Sample character** (`SAMPLE`, `openSample()`): fictional, labelled "Sample character" everywhere, never written to the URL hash or recent searches. Opened from the top nav, the empty state and the Forever-unavailable notice.
+  - Its item icons use guessed Blizzard icon names (`render.worldofwarcraft.com/us/icons/56/<name>.jpg`); any that don't exist fall back to a diamond glyph.
 - Reduced-motion is respected. Layout verified with no horizontal scroll at 320, 390, 768, 1024 and 1440px.
 
 ## Worker (`worker/worker.js`)
