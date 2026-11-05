@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loot Ledger — TBC Classic BiS Advisor</title>
+<title>Loot Ledger — WoW: Forever Armory</title>
+<meta name="description" content="Look up any World of Warcraft: Forever character through the Blizzard API — gear, stats, talents, professions, reputations, achievements and more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -17,11 +18,13 @@
     --sepia:#a9987b;
     --gold:#d4af5a;
     --gold-bright:#f0cd7e;
-    --orange:#ff8c1a;
-    --purple:#a335ee;
     --green:#3fae3f;
     --red:#c0392b;
     --blue:#4a9eff;
+
+    /* item quality */
+    --q-poor:#9d9d9d; --q-common:#ffffff; --q-uncommon:#1eff00; --q-rare:#0070dd;
+    --q-epic:#a335ee; --q-legendary:#ff8000; --q-artifact:#e6cc80; --q-heirloom:#00ccff;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -37,1221 +40,1216 @@
     line-height:1.5;
   }
   a{color:var(--gold-bright);}
+  code{font-family:'JetBrains Mono',monospace;font-size:.92em;background:var(--bronze-soft);padding:1px 5px;border-radius:4px;}
 
-  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 80px;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 
-  header.top{
-    padding:52px 24px 34px;
-    text-align:center;
-    border-bottom:1px solid var(--bronze-soft);
-    margin-bottom:36px;
-  }
-  .eyebrow{
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    letter-spacing:.22em;
-    text-transform:uppercase;
-    color:var(--gold);
-    margin:0 0 14px;
-  }
+  header.top{padding:48px 16px 30px;text-align:center;border-bottom:1px solid var(--bronze-soft);margin-bottom:30px;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:0 0 14px;}
   h1{
-    font-family:'Cinzel',serif;
-    font-weight:700;
-    font-size:clamp(32px,5vw,54px);
-    margin:0 0 12px;
-    letter-spacing:.02em;
+    font-family:'Cinzel',serif;font-weight:700;font-size:clamp(32px,5vw,54px);margin:0 0 12px;letter-spacing:.02em;
     background:linear-gradient(180deg,var(--gold-bright),var(--gold) 60%,#a9843e);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
   }
-  .sub{color:var(--sepia);font-size:15.5px;max-width:560px;margin:0 auto;}
-  .sub a{color:var(--sepia);text-decoration-color:var(--bronze);}
+  .sub{color:var(--sepia);font-size:15.5px;max-width:620px;margin:0 auto;}
 
-  .grid{
-    display:grid;
-    grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
-    gap:28px;
-    align-items:start;
-  }
-  @media (max-width:920px){ .grid{grid-template-columns:1fr;} }
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--bronze);border-radius:10px;overflow:hidden;margin-bottom:22px;}
+  .panel-head{padding:14px 20px;border-bottom:1px solid var(--bronze-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .panel-head h2{font-family:'Cinzel',serif;font-size:16px;letter-spacing:.08em;margin:0;color:var(--gold-bright);font-weight:500;text-transform:uppercase;}
+  .panel-head .meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sepia);}
+  .panel-body{padding:20px;}
 
-  .panel{
-    background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--bronze);
-    border-radius:10px;
-    box-shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 20px 40px -20px rgba(0,0,0,.6);
-    overflow:hidden;
+  /* ---------- search form ---------- */
+  .search-grid{display:grid;grid-template-columns:120px 1fr 1.3fr auto;gap:10px;align-items:end;}
+  @media (max-width:760px){ .search-grid{grid-template-columns:1fr 1fr;} .search-grid .go{grid-column:1 / -1;} }
+  @media (max-width:420px){ .search-grid{grid-template-columns:1fr;} }
+  .fld label{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sepia);margin-bottom:6px;}
+  input[type=text], input[type=password], select{
+    width:100%;background:var(--void);border:1px solid var(--bronze);color:var(--parchment);
+    font-family:'JetBrains Mono',monospace;font-size:13px;padding:11px 12px;border-radius:6px;
   }
-  .panel-head{
-    padding:18px 22px;
-    border-bottom:1px solid var(--bronze-soft);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-  .panel-head h2{
-    font-family:'Cinzel',serif;
-    font-size:17px;
-    letter-spacing:.04em;
-    margin:0;
-    color:var(--gold-bright);
-    font-weight:500;
-    text-transform:uppercase;
-  }
-  .panel-body{padding:22px;}
+  select{appearance:none;cursor:pointer;
+    background-image:linear-gradient(45deg,transparent 50%,var(--sepia) 50%),linear-gradient(135deg,var(--sepia) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 50%, calc(100% - 11px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px;}
+  input:focus, select:focus{outline:none;border-color:var(--gold);}
+  select:focus-visible, input:focus-visible, button:focus-visible, summary:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px;}
 
-  /* ---------- WCL import box ---------- */
-  .wcl-box{
-    background:var(--void);
-    border:1px solid var(--bronze-soft);
-    border-radius:8px;
-    padding:16px;
-    margin-bottom:22px;
-  }
-  .wcl-box h3{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--gold);
-    margin:0 0 12px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .wcl-box h3::before{content:"◆";font-size:9px;color:var(--bronze);}
-  .field-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
-  .field-row input[type=text],
-  .field-row input[type=password]{
-    flex:1;
-    min-width:200px;
-    background:var(--panel);
-    border:1px solid var(--bronze);
-    color:var(--parchment);
-    font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;
-    padding:10px 12px;
-    border-radius:6px;
-  }
-  .field-row input:focus{outline:none;border-color:var(--gold);}
-  .field-row button{
-    background:var(--bronze-soft);
-    border:1px solid var(--bronze);
-    color:var(--parchment);
-    font-family:'JetBrains Mono',monospace;
-    font-size:12px;
-    padding:10px 16px;
-    border-radius:6px;
-    cursor:pointer;
-    white-space:nowrap;
-  }
-  .field-row button:hover{border-color:var(--gold);color:var(--gold-bright);}
-  .field-row button:disabled{opacity:.45;cursor:not-allowed;}
-  .field-hint{font-size:11.5px;color:var(--sepia);margin:-4px 0 12px;line-height:1.5;}
-  .field-hint a{color:var(--sepia);}
-
-  details.creds{margin-bottom:12px;}
-  details.creds summary{
-    cursor:pointer;
-    font-family:'JetBrains Mono',monospace;
-    font-size:11.5px;
-    color:var(--sepia);
-    letter-spacing:.04em;
-    padding:2px 0;
-  }
-  details.creds summary:hover{color:var(--parchment);}
-  details.creds .field-row{margin-top:10px;}
-
-  .wcl-status{
-    font-size:12.5px;
-    padding:9px 12px;
-    border-radius:6px;
-    margin-top:8px;
-    display:none;
-    line-height:1.5;
-  }
-  .wcl-status.show{display:block;}
-  .wcl-status.info{background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.35);color:#8cbfff;}
-  .wcl-status.error{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.4);color:#e0736a;}
-  .wcl-status.success{background:rgba(63,174,63,.12);border:1px solid rgba(63,174,63,.4);color:#7fd67f;}
-
-  select#wclCharacterSelect{
-    width:100%;
-    margin-top:10px;
-    background:var(--panel);
-    border:1px solid var(--bronze);
-    color:var(--parchment);
-    font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;
-    padding:10px 12px;
-    border-radius:6px;
-    display:none;
-  }
-  select#wclCharacterSelect.show{display:block;}
-
-  /* ---------- spec selector ---------- */
-  .spec-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
-  select{
-    appearance:none;
-    background:var(--void);
-    border:1px solid var(--bronze);
-    color:var(--parchment);
-    font-family:'JetBrains Mono',monospace;
-    font-size:13.5px;
-    padding:10px 14px;
-    border-radius:6px;
-    flex:1;
-    min-width:200px;
-    cursor:pointer;
-  }
-  select:focus-visible, input:focus-visible, button:focus-visible{
-    outline:2px solid var(--gold-bright);
-    outline-offset:2px;
-  }
-  .spec-note{
-    font-size:12.5px;
-    color:var(--sepia);
-    margin:0 0 20px;
-    padding:10px 12px;
-    background:var(--bronze-soft);
-    border-radius:6px;
-    border:1px solid var(--bronze);
-  }
-
-  /* ---------- gear slot grid ---------- */
-  .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  @media (max-width:520px){ .slots{grid-template-columns:1fr;} }
-  .slot{
-    background:var(--void);
-    border:1px solid var(--bronze-soft);
-    border-radius:7px;
-    padding:10px 12px;
-    transition:border-color .15s ease;
-  }
-  .slot:focus-within{border-color:var(--gold);}
-  .slot.imported{border-color:rgba(74,158,255,.5);}
-  .slot-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-  .slot label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:10.5px;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--sepia);
-  }
-  .slot .imported-tag{
-    font-family:'JetBrains Mono',monospace;
-    font-size:9px;
-    color:var(--blue);
-    letter-spacing:.06em;
-  }
-  .slot input{
-    width:100%;
-    background:transparent;
-    border:none;
-    color:var(--parchment);
-    font-family:'Inter',sans-serif;
-    font-size:13.5px;
-    padding:0;
-  }
-  .slot input::placeholder{color:#5d5442;}
-  .slot input:focus{outline:none;}
-  .slot .id-link{font-size:10.5px;margin-top:4px;display:inline-block;}
-
-  .actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;}
   button.primary{
-    flex:1;
-    min-width:180px;
-    background:linear-gradient(180deg,var(--gold-bright),var(--gold));
-    color:#241a08;
-    border:none;
-    font-family:'Cinzel',serif;
-    font-weight:700;
-    font-size:14.5px;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-    padding:14px 20px;
-    border-radius:7px;
-    cursor:pointer;
-    box-shadow:0 8px 20px -8px rgba(212,175,90,.55);
-    transition:transform .12s ease, box-shadow .12s ease;
+    background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:#241a08;border:none;
+    font-family:'Cinzel',serif;font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;
+    padding:12px 22px;border-radius:7px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(212,175,90,.55);
+    transition:transform .12s ease, box-shadow .12s ease;white-space:nowrap;
   }
   button.primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(212,175,90,.7);}
-  button.primary:active{transform:translateY(0);}
+  button.primary:disabled{opacity:.5;cursor:wait;transform:none;}
   button.ghost{
-    background:transparent;
-    border:1px solid var(--bronze);
-    color:var(--sepia);
-    font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;
-    padding:14px 16px;
-    border-radius:7px;
-    cursor:pointer;
+    background:transparent;border:1px solid var(--bronze);color:var(--sepia);font-family:'JetBrains Mono',monospace;
+    font-size:12px;padding:9px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;
   }
   button.ghost:hover{color:var(--parchment);border-color:var(--gold);}
 
-  /* ---------- results ---------- */
-  .empty-state{padding:60px 30px;text-align:center;color:var(--sepia);}
+  .field-hint{font-size:12px;color:var(--sepia);margin:8px 0 0;line-height:1.55;}
+  .field-hint a{color:var(--sepia);}
+
+  details.box{margin-top:16px;background:var(--void);border:1px solid var(--bronze-soft);border-radius:8px;}
+  details.box > summary{cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--sepia);letter-spacing:.06em;padding:11px 14px;list-style:none;}
+  details.box > summary::-webkit-details-marker{display:none;}
+  details.box > summary::before{content:"▸ ";color:var(--bronze);}
+  details.box[open] > summary::before{content:"▾ ";}
+  details.box > summary:hover{color:var(--parchment);}
+  details.box .inner{padding:0 14px 14px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media (max-width:560px){ .row2{grid-template-columns:1fr;} }
+  .cred-state{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:2px 8px;border-radius:99px;margin-left:8px;}
+  .cred-state.ok{background:rgba(63,174,63,.15);color:#7fd67f;}
+  .cred-state.no{background:rgba(192,57,43,.15);color:#e0736a;}
+
+  .status{font-size:13px;padding:10px 12px;border-radius:6px;margin-top:14px;display:none;line-height:1.5;}
+  .status.show{display:block;}
+  .status.info{background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.35);color:#8cbfff;}
+  .status.error{background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.4);color:#e0736a;}
+  .status.success{background:rgba(63,174,63,.12);border:1px solid rgba(63,174,63,.4);color:#7fd67f;}
+
+  .recent{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .recent:empty{display:none;}
+  .recent button{background:var(--bronze-soft);border:1px solid var(--bronze);color:var(--parchment);font-size:12px;padding:4px 10px;border-radius:99px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .recent button:hover{border-color:var(--gold);}
+
+  /* ---------- match picker ---------- */
+  .matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+  .match{background:var(--void);border:1px solid var(--bronze-soft);border-radius:8px;padding:12px 14px;cursor:pointer;text-align:left;color:var(--parchment);font-family:'Inter',sans-serif;}
+  .match:hover{border-color:var(--gold);}
+  .match .n{font-weight:600;font-size:15px;}
+  .match .d{font-size:12px;color:var(--sepia);}
+
+  /* ---------- character hero ---------- */
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:0;}
+  @media (max-width:820px){ .hero{grid-template-columns:1fr;} }
+  .hero-art{position:relative;min-height:300px;background:radial-gradient(ellipse at 50% 30%, rgba(212,175,90,.12), transparent 70%), var(--void);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border-right:1px solid var(--bronze-soft);}
+  .hero-art img{max-width:100%;max-height:440px;object-fit:contain;display:block;}
+  .hero-art .placeholder{font-family:'Cinzel',serif;font-size:80px;color:var(--bronze);align-self:center;}
+  .hero-info{padding:24px;}
+  .hero-title{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sepia);margin:0 0 6px;}
+  .hero-name{font-family:'Cinzel',serif;font-size:clamp(28px,4vw,40px);font-weight:700;margin:0;line-height:1.15;word-break:break-word;}
+  .hero-line{color:var(--sepia);margin:6px 0 18px;font-size:14.5px;}
+  .hero-line strong{color:var(--parchment);font-weight:500;}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--bronze);background:var(--bronze-soft);}
+  .badge.alliance{border-color:#2a5aa8;color:#8db3ff;background:rgba(42,90,168,.15);}
+  .badge.horde{border-color:#a82a2a;color:#ff8d8d;background:rgba(168,42,42,.15);}
+  .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .fact{background:var(--void);border:1px solid var(--bronze-soft);border-radius:7px;padding:9px 12px;min-width:0;}
+  .fact .k{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--sepia);}
+  .fact .v{font-size:15px;font-weight:500;word-break:break-word;}
+  .fact .v.big{font-family:'Cinzel',serif;font-size:22px;color:var(--gold-bright);}
+
+  /* ---------- section nav ---------- */
+  .jump{position:sticky;top:0;z-index:5;background:rgba(16,12,8,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--bronze-soft);margin:0 -16px 22px;padding:10px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;}
+  .jump a{flex:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--sepia);text-decoration:none;padding:5px 11px;border:1px solid var(--bronze-soft);border-radius:99px;}
+  .jump a:hover{color:var(--gold-bright);border-color:var(--gold);}
+  .jump a .c{color:var(--gold);margin-left:4px;}
+
+  /* ---------- gear ---------- */
+  .gear{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px;}
+  @media (max-width:400px){ .gear{grid-template-columns:1fr;} }
+  .item{background:var(--void);border:1px solid var(--bronze-soft);border-radius:8px;padding:12px;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;}
+  .item .icon{width:44px;height:44px;border-radius:6px;border:2px solid var(--bronze);background:var(--panel) center/cover no-repeat;}
+  .item .slot{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--sepia);}
+  .item .iname{font-weight:600;font-size:14.5px;line-height:1.3;}
+  .item .ilvl{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--gold);}
+  .item ul{list-style:none;padding:0;margin:6px 0 0;font-size:12.5px;}
+  .item li{margin:1px 0;}
+  .item .muted{color:var(--sepia);}
+  .item .green{color:var(--q-uncommon);}
+  .item .ench{color:var(--q-uncommon);}
+  .item .socket{color:#c9c9ff;}
+  .item .set{color:var(--q-artifact);}
+  .item .set .off{color:var(--sepia);}
+  .item .flav{color:#ffd100;font-style:italic;}
+  .q-POOR{color:var(--q-poor);} .q-COMMON{color:var(--q-common);} .q-UNCOMMON{color:var(--q-uncommon);}
+  .q-RARE{color:var(--q-rare);} .q-EPIC{color:var(--q-epic);} .q-LEGENDARY{color:var(--q-legendary);}
+  .q-ARTIFACT{color:var(--q-artifact);} .q-HEIRLOOM{color:var(--q-heirloom);}
+  .b-POOR{border-color:var(--q-poor)!important;} .b-UNCOMMON{border-color:var(--q-uncommon)!important;}
+  .b-RARE{border-color:var(--q-rare)!important;} .b-EPIC{border-color:var(--q-epic)!important;}
+  .b-LEGENDARY{border-color:var(--q-legendary)!important;} .b-ARTIFACT{border-color:var(--q-artifact)!important;} .b-HEIRLOOM{border-color:var(--q-heirloom)!important;}
+
+  /* ---------- generic blocks ---------- */
+  .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+  .kv .fact .v{font-size:14px;}
+  .sub-h{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:18px 0 10px;}
+  .sub-h:first-child{margin-top:0;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chips span{font-size:12px;background:var(--bronze-soft);border:1px solid var(--bronze);padding:3px 9px;border-radius:99px;}
+  .more{font-size:12px;color:var(--sepia);margin-top:8px;}
+  .tree{font-size:13px;}
+  .tree dl{margin:0;display:grid;grid-template-columns:minmax(120px,max-content) minmax(0,1fr);gap:3px 14px;}
+  .tree dt{color:var(--sepia);font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+  .tree dd{margin:0;word-break:break-word;}
+  .tree .arr > .el{border-left:2px solid var(--bronze-soft);padding:4px 0 4px 10px;margin:4px 0;}
+  .na{color:var(--sepia);font-size:13px;font-style:italic;}
+
+  .bars{display:flex;flex-direction:column;gap:8px;}
+  .barrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;font-size:13px;}
+  .barrow .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .barrow .val{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--sepia);}
+  .barrow .track{grid-column:1 / -1;height:6px;background:var(--void);border:1px solid var(--bronze-soft);border-radius:99px;overflow:hidden;}
+  .barrow .track > div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
+  .barrow .track > div.done{background:var(--green);}
+
+  .talents{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;}
+  .talent{background:var(--void);border:1px solid var(--bronze-soft);border-radius:7px;padding:9px 12px;font-size:13px;}
+  .talent .tn{font-weight:600;}
+  .talent .tr{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);float:right;}
+  .talent .td{color:var(--sepia);font-size:12px;margin-top:3px;}
+  .spec-card{margin-bottom:14px;}
+  .spec-card h4{margin:0 0 8px;font-family:'Cinzel',serif;font-size:16px;color:var(--parchment);}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(63,174,63,.15);color:#7fd67f;margin-left:8px;vertical-align:middle;}
+  .loadout-code{display:flex;gap:8px;margin:6px 0 10px;}
+  .loadout-code input{font-size:11px;padding:7px 9px;}
+
+  .inst{background:var(--void);border:1px solid var(--bronze-soft);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .inst h5{margin:0 0 8px;font-size:14px;}
+  .inst .enc{font-size:12px;color:var(--sepia);margin-top:6px;}
+
+  .table{width:100%;border-collapse:collapse;font-size:13px;}
+  .table th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sepia);font-weight:500;border-bottom:1px solid var(--bronze);padding:6px 8px;}
+  .table td{border-bottom:1px solid var(--bronze-soft);padding:6px 8px;}
+  .scroll-x{overflow-x:auto;}
+
+  pre.raw{background:var(--void);border:1px solid var(--bronze-soft);border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;max-height:520px;overflow:auto;white-space:pre;color:#cfc3a8;margin:0;}
+  .raw-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+  .raw-tools select{width:auto;min-width:220px;flex:1;}
+
+  .empty-state{padding:56px 24px;text-align:center;color:var(--sepia);}
   .empty-state .glyph{font-family:'Cinzel',serif;font-size:38px;color:var(--bronze);margin-bottom:14px;}
-  .empty-state p{font-size:13.5px;max-width:340px;margin:0 auto;}
+  .empty-state p{font-size:14px;max-width:440px;margin:0 auto;}
 
-  .score-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
-  .score-row .big{font-family:'Cinzel',serif;font-size:34px;font-weight:700;color:var(--gold-bright);}
-  .score-row .of{color:var(--sepia);font-size:14px;}
-  .bar{
-    height:6px;background:var(--void);border-radius:99px;overflow:hidden;
-    margin-bottom:22px;border:1px solid var(--bronze-soft);
-  }
-  .bar > div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-  .legend{
-    display:flex;gap:16px;flex-wrap:wrap;
-    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sepia);margin-bottom:20px;
-  }
-  .legend span{display:inline-flex;align-items:center;gap:6px;}
-  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
-
-  .cards{display:flex;flex-direction:column;gap:10px;}
-  .card{
-    position:relative;background:var(--void);border:1px solid var(--bronze-soft);
-    border-left:3px solid var(--bronze);border-radius:7px;padding:14px 16px;
-    transition:box-shadow .15s ease, border-color .15s ease;
-  }
-  .card:hover{box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 0 8px 22px -12px rgba(0,0,0,.7);}
-  .card.status-bis{border-left-color:var(--green);}
-  .card.status-alt{border-left-color:var(--purple);}
-  .card.status-upgrade{border-left-color:var(--orange);}
-  .card.status-missing{border-left-color:var(--red);}
-
-  .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
-  .card-slot{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sepia);}
-  .status-pill{
-    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
-    padding:3px 9px;border-radius:99px;white-space:nowrap;
-  }
-  .status-bis .status-pill{background:rgba(63,174,63,.15);color:#7fd67f;}
-  .status-alt .status-pill{background:rgba(163,53,238,.15);color:#c98bfa;}
-  .status-upgrade .status-pill{background:rgba(255,140,26,.15);color:var(--orange);}
-  .status-missing .status-pill{background:rgba(192,57,43,.15);color:#e0736a;}
-
-  .card-line{font-size:13.5px;margin:3px 0;}
-  .card-line .k{color:var(--sepia);font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-right:8px;}
-  .card-line .v{color:var(--parchment);}
-  .card-line .v.bis-name{color:var(--gold-bright);font-weight:500;}
-  .card-line .v a{color:inherit;text-decoration-color:var(--bronze);}
-  .card-alts{font-size:12px;color:var(--sepia);margin-top:6px;}
-
-  .bis-block{margin-top:18px;padding-top:16px;border-top:1px solid var(--bronze-soft);}
-  .bis-block h3{
-    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--sepia);margin:0 0 10px;
-  }
-  .bis-list{display:flex;flex-wrap:wrap;gap:8px;}
-  .bis-list span{
-    font-size:12px;background:var(--bronze-soft);border:1px solid var(--bronze);
-    color:var(--parchment);padding:4px 10px;border-radius:99px;
-  }
-
-  footer{
-    text-align:center;color:var(--sepia);font-size:12.5px;margin-top:48px;
-    padding-top:24px;border-top:1px solid var(--bronze-soft);
-  }
+  footer{text-align:center;color:var(--sepia);font-size:12.5px;margin-top:48px;padding-top:24px;border-top:1px solid var(--bronze-soft);}
   footer a{color:var(--sepia);}
-  .source-link{display:inline-block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;}
 
-  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important;} }
 </style>
 </head>
 <body>
 
 <header class="top">
-  <p class="eyebrow">Burning Crusade Classic · Phase 5 · Sunwell Plateau</p>
+  <p class="eyebrow">World of Warcraft: Forever · Armory</p>
   <h1>Loot Ledger</h1>
-  <p class="sub">Paste a Warcraft Logs report, pick your character, and get a slot-by-slot read against Wowhead's current Best-in-Slot guides.</p>
+  <p class="sub">Look up any WoW: Forever character through the official Blizzard API. You'll get their gear, stats, talents, professions, reputations, achievements, raid progress, collections and everything else the API returns.</p>
 </header>
 
 <div class="wrap">
-  <div class="grid">
 
-    <!-- LEFT: input -->
+  <!-- SEARCH -->
+  <div class="panel">
+    <div class="panel-head"><h2>Find a Character</h2><span class="meta" id="nsMeta"></span></div>
+    <div class="panel-body">
+      <form id="searchForm" autocomplete="off">
+        <div class="search-grid">
+          <div class="fld">
+            <label for="region">Region</label>
+            <select id="region">
+              <option value="us">US</option>
+              <option value="eu">EU</option>
+              <option value="kr">KR</option>
+              <option value="tw">TW</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label for="realm">Realm</label>
+            <select id="realm">
+              <option value="">Auto-detect (search all)</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label for="charName">Character name</label>
+            <input type="text" id="charName" placeholder="e.g. Thrall" spellcheck="false">
+          </div>
+          <div class="go"><button type="submit" class="primary" id="searchBtn">Search</button></div>
+        </div>
+        <p class="field-hint">
+          Forever doesn't show realms, so each character's realm is hidden. Leave Realm on <strong>Auto-detect</strong> and every realm in your region is searched; if more than one character has the name, you pick from the list. If you type a surname, only the first word (the character name) is used in the lookup, and the surname is then used to narrow the matches.
+        </p>
+        <div class="recent" id="recent"></div>
+      </form>
+
+      <details class="box" id="credsBox">
+        <summary>Blizzard API access <span class="cred-state no" id="credState">not set</span></summary>
+        <div class="inner">
+          <p class="field-hint" style="margin-top:0">
+            This site has no server of its own, so it talks to Blizzard straight from your browser and you need your own free API client.
+            Create one at <a href="https://develop.battle.net/access/clients" target="_blank" rel="noopener">develop.battle.net ↗</a>
+            (any redirect URL works; you only need the Client ID and Secret). Your credentials are sent only to <code>oauth.battle.net</code> and are kept in this tab's session storage, unless you tick "remember".
+          </p>
+          <div class="row2">
+            <div class="fld"><label for="clientId">Client ID</label><input type="text" id="clientId" spellcheck="false"></div>
+            <div class="fld"><label for="clientSecret">Client Secret</label><input type="password" id="clientSecret"></div>
+          </div>
+          <p class="field-hint">
+            <label style="cursor:pointer"><input type="checkbox" id="remember"> Remember on this device (stored in localStorage)</label>
+          </p>
+          <div class="fld" style="margin-top:12px">
+            <label for="manualToken">…or paste an access token instead</label>
+            <input type="password" id="manualToken" placeholder="Bearer token (optional)">
+          </div>
+          <p class="field-hint">If the browser blocks the token request, make a token in a terminal and paste it here (it lasts about 24h):<br>
+            <code>curl -u CLIENT_ID:CLIENT_SECRET -d grant_type=client_credentials https://oauth.battle.net/token</code></p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+            <button type="button" class="ghost" id="testBtn">Test connection &amp; load realms</button>
+            <button type="button" class="ghost" id="forgetBtn">Forget credentials</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="box">
+        <summary>Advanced: API namespaces</summary>
+        <div class="inner">
+          <p class="field-hint" style="margin-top:0">
+            Blizzard hasn't documented the Forever API yet. These defaults (<code>profile-forever-{region}</code> and <code>dynamic-forever-{region}</code>) come from community testing. If Blizzard changes them, update them here; your changes are saved in this browser. Use <code>{region}</code> as a placeholder.
+          </p>
+          <div class="row2">
+            <div class="fld"><label for="nsProfile">Profile namespace</label><input type="text" id="nsProfile" spellcheck="false"></div>
+            <div class="fld"><label for="nsDynamic">Dynamic namespace (realms)</label><input type="text" id="nsDynamic" spellcheck="false"></div>
+          </div>
+          <div class="row2" style="margin-top:10px">
+            <div class="fld"><label for="locale">Locale</label>
+              <select id="locale">
+                <option>en_US</option><option>es_MX</option><option>pt_BR</option><option>en_GB</option>
+                <option>de_DE</option><option>fr_FR</option><option>es_ES</option><option>it_IT</option>
+                <option>ru_RU</option><option>ko_KR</option><option>zh_TW</option>
+              </select>
+            </div>
+            <div class="fld"><label for="realmSlug">Manual realm slug (overrides dropdown)</label><input type="text" id="realmSlug" placeholder="optional" spellcheck="false"></div>
+          </div>
+          <div style="margin-top:12px"><button type="button" class="ghost" id="resetNsBtn">Reset to defaults</button></div>
+        </div>
+      </details>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
     <div class="panel">
-      <div class="panel-head"><h2>Your Character</h2></div>
-      <div class="panel-body">
-
-        <div class="wcl-box">
-          <h3>Import from Warcraft Logs</h3>
-          <div class="field-row">
-            <input type="text" id="wclUrl" placeholder="https://www.warcraftlogs.com/reports/XXXXXXXX?fight=12">
-            <button id="wclParseBtn">Parse</button>
-          </div>
-          <div class="field-hint">Paste the URL from your browser while viewing a specific fight (it needs a <code>?fight=</code> number in it — "latest" links won't work).</div>
-
-          <details class="creds">
-            <summary>API credentials (required to fetch — click to expand)</summary>
-            <div class="field-row">
-              <input type="text" id="wclClientId" placeholder="Client ID">
-              <input type="password" id="wclClientSecret" placeholder="Client Secret">
-            </div>
-            <div class="field-hint">
-              Free, takes a minute: create one at
-              <a href="https://www.warcraftlogs.com/api/clients/" target="_blank" rel="noopener">warcraftlogs.com/api/clients ↗</a>.
-              These are sent directly from your browser to Warcraft Logs' own servers to fetch a temporary access token — this page has no backend of its own, so nothing passes through anyone else's server. They're kept only in this tab (session storage) and cleared when you close it.
-            </div>
-          </details>
-
-          <div class="field-row">
-            <button id="wclFetchBtn">Fetch Characters</button>
-          </div>
-
-          <select id="wclCharacterSelect"></select>
-          <div class="wcl-status" id="wclStatus"></div>
-        </div>
-
-        <div class="spec-row">
-          <select id="specSelect"></select>
-        </div>
-        <p class="spec-note" id="specNote"></p>
-
-        <div class="slots" id="slotGrid"></div>
-
-        <div class="actions">
-          <button class="primary" id="analyzeBtn">Analyze Gear</button>
-          <button class="ghost" id="clearBtn">Clear</button>
-          <button class="ghost" id="sampleBtn">Load Example</button>
-        </div>
+      <div class="empty-state">
+        <div class="glyph">⚔</div>
+        <p>Add your Blizzard API credentials, enter a character name and hit <strong>Search</strong>.</p>
       </div>
     </div>
-
-    <!-- RIGHT: results -->
-    <div class="panel">
-      <div class="panel-head"><h2>Loot Report</h2></div>
-      <div class="panel-body" id="resultsBody">
-        <div class="empty-state">
-          <div class="glyph">⚔</div>
-          <p>Import a log or fill in your gear on the left, then hit <strong>Analyze Gear</strong> to see what's worth chasing this phase.</p>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <footer>
-    Item data sourced from Wowhead's Phase 5 (Sunwell Plateau) Best-in-Slot guides.
-    Two specs are freshly verified against the live guides; everything else is unpopulated on purpose rather than guessed.
-    <br>
-    <span id="footerLink"></span>
+    Data from the official <a href="https://develop.battle.net/documentation/world-of-warcraft" target="_blank" rel="noopener">Blizzard Battle.net API</a>.
+    Blizzard hasn't officially documented WoW: Forever API support yet, so a section can show "not available" if Blizzard doesn't serve it for Forever.
+    Not affiliated with Blizzard Entertainment. World of Warcraft is a trademark of Blizzard Entertainment, Inc.
   </footer>
 </div>
 
 <script>
 /* =======================================================================
-   BIS DATA — item ids come from the Wowhead item URLs on each guide, so
-   gear imported from Warcraft Logs can be matched by exact item ID rather
-   than fuzzy name matching. Manual text entry still falls back to names.
+   CONFIG
    ======================================================================= */
-const BIS_DATA = {
-  warrior_fury: {
-    class: "Warrior", spec: "Fury", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/fury-warrior-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Coif of Alleria",id:34333}, alternatives:[{name:"Crown of Anasterian",id:34345}] },
-      neck:     { best:{name:"Hard Khorium Choker",id:34358}, alternatives:[{name:"Clutch of Demise",id:34177}] },
-      shoulder: { best:{name:"Pauldrons of Berserking",id:34388}, alternatives:[{name:"Demontooth Shoulderpads",id:34392},{name:"Mantle of the Golden Forest",id:34194},{name:"Onslaught Shoulderblades",id:30979}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Cloak of Darkness (crafted)",id:33122}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Hard Khorium Battleplate",id:34377}] },
-      wrist:    { best:{name:"Onslaught Bracers",id:34441}, alternatives:[{name:"Bindings of Lightning Reflexes (crafted)",id:32574}] },
-      hands:    { best:{name:"Thalassian Ranger Gauntlets",id:34343}, alternatives:[{name:"Gloves of Immortal Dusk (crafted)",id:34370},{name:"Borderland Paingrips",id:34341}] },
-      waist:    { best:{name:"Onslaught Belt",id:34546}, alternatives:[{name:"Belt of One-Hundred Deaths",id:30106}] },
-      legs:     { best:{name:"Felfury Legplates",id:34180}, alternatives:[{name:"Leggings of the Immortal Night",id:34188}] },
-      feet:     { best:{name:"Onslaught Treads",id:34569}, alternatives:[] },
-      ring1:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Hard Khorium Band",id:34361},{name:"Stormrage Signet Ring",id:32497}] },
-      ring2:    { best:{name:"Hard Khorium Band",id:34361}, alternatives:[{name:"Stormrage Signet Ring",id:32497}] },
-      trinket1: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Shard of Contempt",id:34472},{name:"Dragonspine Trophy",id:28830}] },
-      trinket2: { best:{name:"Shard of Contempt",id:34472}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      main_hand:{ best:{name:"Warglaive of Azzinoth",id:32837}, alternatives:[{name:"Dragonstrike",id:28439},{name:"Muramasa",id:34214}] },
-      off_hand: { best:{name:"Warglaive of Azzinoth",id:32838}, alternatives:[{name:"Muramasa",id:34214}] },
-      ranged:   { best:{name:"Golden Bow of Quel'Thalas",id:34196}, alternatives:[{name:"Crossbow of Relentless Strikes",id:34892}] }
-    }
-  },
-  mage_frost: {
-    class: "Mage", spec: "Frost", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/frost-mage-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Dark Conjuror's Collar",id:34340}, alternatives:[{name:"Annihilator Holo-Gogs (engineering)",id:34847},{name:"Cowl of the Illidari High Lord",id:32525}] },
-      neck:     { best:{name:"Amulet of Unfettered Magics",id:34204}, alternatives:[{name:"Pendant of Sunfire (crafted)",id:34359},{name:"Eye of the Night",id:24116}] },
-      shoulder: { best:{name:"Mantle of the Tempest",id:31059}, alternatives:[{name:"Amice of the Convoker",id:34210}] },
-      back:     { best:{name:"Tattered Cape of Antonidas",id:34242}, alternatives:[{name:"Shroud of the Highborne",id:32524},{name:"Shadowcaster's Drape",id:33591}] },
-      chest:    { best:{name:"Sunfire Robe (crafted)",id:34364}, alternatives:[{name:"Fel Conquerer Raiments",id:34232},{name:"Robes of Ghostly Hatred",id:34399}] },
-      wrist:    { best:{name:"Bracers of the Tempest",id:34447}, alternatives:[{name:"Bracers of Nimble Thought (crafted)",id:32586}] },
-      hands:    { best:{name:"Handguards of Defiled Worlds",id:34344}, alternatives:[{name:"Gloves of the Tempest",id:31055},{name:"Sunfire Handwraps (crafted)",id:34366}] },
-      waist:    { best:{name:"Belt of the Tempest",id:34557}, alternatives:[{name:"Anetheron's Noose",id:30888}] },
-      legs:     { best:{name:"Leggings of Calamity",id:34181}, alternatives:[{name:"Pantaloons of Growing Strife",id:34386},{name:"Leggings of the Tempest",id:31058}] },
-      feet:     { best:{name:"Boots of the Tempest",id:34574}, alternatives:[{name:"Slippers of the Seacaller",id:32239}] },
-      ring1:    { best:{name:"Loop of Forged Power (crafted)",id:34362}, alternatives:[{name:"Ring of Omnipotence",id:34230},{name:"Mana Attuned Band",id:33497}] },
-      ring2:    { best:{name:"Ring of Omnipotence",id:34230}, alternatives:[{name:"Mana Attuned Band",id:33497}] },
-      trinket1: { best:{name:"Shifting Naaru Sliver",id:34429}, alternatives:[{name:"The Skull of Gul'dan",id:32483},{name:"Hex Shrunken Head",id:33829}] },
-      trinket2: { best:{name:"The Skull of Gul'dan",id:32483}, alternatives:[{name:"Hex Shrunken Head",id:33829},{name:"Serpent-Coil Braid",id:30720}] },
-      main_hand:{ best:{name:"Sunflare",id:34336}, alternatives:[{name:"Grand Magister's Staff of Torrents",id:34182},{name:"Zhar'doom, Greatstaff of the Devourer",id:32374}] },
-      off_hand: { best:{name:"Heart of the Pit",id:34179}, alternatives:[{name:"Chronicle of Dark Secrets",id:30872}] },
-      wand:     { best:{name:"Wand of the Demonsoul",id:34347}, alternatives:[{name:"Wand of the Forgotten Star",id:29982}] }
-    }
-  },
-  warrior_protection: {
-    class: "Warrior", spec: "Protection", role: "Tank",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/protection-warrior-tank-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Crown of Dath'Remar",id:34400}, alternatives:[{name:"Hard Khorium Goggles",id:34357},{name:"Brutal Gladiator's Plate Helm",id:35068},{name:"Crown of Anasterian",id:34345}] },
-      neck:     { best:{name:"Collar of the Pit Lord",id:34178}, alternatives:[{name:"Brooch of Deftness",id:33296},{name:"Pendant of Titans",id:32362},{name:"Shattered Sun Pendant of Resolve",id:34680}] },
-      shoulder: { best:{name:"Brutal Gladiator's Plate Shoulders",id:35070}, alternatives:[{name:"Pauldrons of Berserking",id:34388},{name:"Pauldrons of Perseverance",id:34192},{name:"Onslaught Shoulderguards",id:30980}] },
-      back:     { best:{name:"Crimson Paragon's Cover",id:34190}, alternatives:[{name:"Pepe's Shroud of Pacification",id:34010},{name:"Slikk's Cloak of Placation",id:33593}] },
-      chest:    { best:{name:"Brutal Gladiator's Plate Chestpiece",id:35066}, alternatives:[{name:"Hard Khorium Battleplate",id:34377},{name:"Warharness of Reckless Fury",id:34215},{name:"Onslaught Chestguard",id:30976}] },
-      wrist:    { best:{name:"Onslaught Wristguards",id:34442}, alternatives:[{name:"Bracers of the Ancient Phalanx",id:33516},{name:"Eternium Shell Bracers",id:32232}] },
-      hands:    { best:{name:"Gauntlets of Enforcement",id:32280}, alternatives:[{name:"Hard Khorium Battlefists",id:34378},{name:"Borderland Paingrips",id:34341},{name:"Borderland Fortress Grips",id:34352}] },
-      waist:    { best:{name:"Onslaught Waistguard",id:34547}, alternatives:[{name:"Girdle of the Fearless",id:34941}] },
-      legs:     { best:{name:"Felstrength Legplates",id:34381}, alternatives:[{name:"Sunguard Legplates",id:34940},{name:"Brutal Gladiator's Plate Legguards",id:35069},{name:"Judicator's Legguards",id:34382}] },
-      feet:     { best:{name:"Onslaught Boots",id:34568}, alternatives:[] },
-      ring1:    { best:{name:"Ring of Hardened Resolve",id:34213}, alternatives:[{name:"Ring of the Stalwart Protector",id:34888},{name:"Band of the Abyssal Lord",id:32261}] },
-      ring2:    { best:{name:"Hard Khorium Band",id:34361}, alternatives:[{name:"Angelista's Revenge",id:34887},{name:"Signet of Primal Wrath",id:33496},{name:"Ring of Deceitful Intent",id:32266}] },
-      trinket1: { best:{name:"Commendation of Kael'thas",id:34473}, alternatives:[{name:"Darkmoon Card: Vengeance",id:31858},{name:"Ancient Aqir Artifact",id:33830}] },
-      trinket2: { best:{name:"Shard of Contempt",id:34472}, alternatives:[{name:"Steely Naaru Sliver",id:34428},{name:"Icon of Unyielding Courage",id:28121}] },
-      main_hand:{ best:{name:"Dragonscale-Encrusted Longblade",id:34164}, alternatives:[{name:"The Brutalizer",id:32254},{name:"Blade of Savagery",id:32369},{name:"Swiftsteel Bludgeon",id:32943}] },
-      off_hand: { best:{name:"Sword Breaker's Bulwark",id:34185}, alternatives:[{name:"Bulwark of Azzinoth",id:32375},{name:"Brutal Gladiator's Shield Wall",id:35094}] },
-      ranged:   { best:{name:"Legionkiller",id:32253}, alternatives:[{name:"Blade of Life's Inevitability",id:34349},{name:"Arcanite Steam-Pistol",id:29949}] }
-    }
-  },
-  warrior_arms: {
-    class: "Warrior", spec: "Arms", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/arms-warrior-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Coif of Alleria",id:34333}, alternatives:[{name:"Crown of Anasterian",id:34345}] },
-      neck:     { best:{name:"Hard Khorium Choker",id:34358}, alternatives:[{name:"Clutch of Demise",id:34177}] },
-      shoulder: { best:{name:"Pauldrons of Berserking",id:34388}, alternatives:[{name:"Demontooth Shoulderpads",id:34392},{name:"Mantle of the Golden Forest",id:34194},{name:"Onslaught Shoulderblades",id:30979}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Cloak of Darkness (crafted)",id:33122}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Hard Khorium Battleplate",id:34377}] },
-      wrist:    { best:{name:"Onslaught Bracers",id:34441}, alternatives:[{name:"Bindings of Lightning Reflexes (crafted)",id:32574}] },
-      hands:    { best:{name:"Thalassian Ranger Gauntlets",id:34343}, alternatives:[{name:"Gloves of Immortal Dusk (crafted)",id:34370},{name:"Borderland Paingrips",id:34341}] },
-      waist:    { best:{name:"Onslaught Belt",id:34546}, alternatives:[{name:"Belt of One-Hundred Deaths",id:30106}] },
-      legs:     { best:{name:"Felfury Legplates",id:34180}, alternatives:[{name:"Leggings of the Immortal Night",id:34188}] },
-      feet:     { best:{name:"Onslaught Treads",id:34569}, alternatives:[] },
-      ring1:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Hard Khorium Band",id:34361},{name:"Stormrage Signet Ring",id:32497}] },
-      ring2:    { best:{name:"Hard Khorium Band",id:34361}, alternatives:[{name:"Stormrage Signet Ring",id:32497}] },
-      trinket1: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Shard of Contempt",id:34472},{name:"Dragonspine Trophy",id:28830}] },
-      trinket2: { best:{name:"Shard of Contempt",id:34472}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      main_hand:{ best:{name:"Apolyon, the Soul-Render",id:34247}, alternatives:[{name:"Cataclysm's Edge",id:30902},{name:"Soul Cleaver",id:32348},{name:"Twinblade of the Phoenix",id:29993},{name:"Warglaive of Azzinoth (dual-wield build)",id:32837}] },
-      ranged:   { best:{name:"Golden Bow of Quel'Thalas",id:34196}, alternatives:[{name:"Crossbow of Relentless Strikes",id:34892}] }
-    }
-  },
-  paladin_protection: {
-    class: "Paladin", spec: "Protection", role: "Tank",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/paladin-tank-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Helm of Uther's Resolve",id:34401}, alternatives:[{name:"Crown of Dath'Remar",id:34400},{name:"Faceplate of the Impenetrable",id:32521},{name:"Lightbringer Faceguard",id:30987}] },
-      neck:     { best:{name:"Collar of the Pit Lord",id:34178}, alternatives:[{name:"The Darkener's Grasp",id:30007},{name:"Pendant of Titans",id:32362}] },
-      shoulder: { best:{name:"Spaulders of the Thalassian Defender",id:34389}, alternatives:[{name:"Pauldrons of Perseverance",id:34192},{name:"Lightbringer Shoulderguards",id:30998}] },
-      back:     { best:{name:"Crimson Paragon's Cover",id:34190}, alternatives:[{name:"Slikk's Cloak of Placation",id:33593},{name:"Ruby Drape of the Mysticant",id:28766}] },
-      chest:    { best:{name:"Heroic Judicator's Chestguard",id:34216}, alternatives:[{name:"Lightbringer Chestguard",id:30991},{name:"Shattrath Protectorate's Breastplate",id:34945}] },
-      wrist:    { best:{name:"Lightbringer Wristguards",id:34433}, alternatives:[{name:"Eternium Shell Bracers",id:32232}] },
-      hands:    { best:{name:"Borderland Fortress Grips",id:34352}, alternatives:[{name:"Lightbringer Handguards",id:30985},{name:"Royal Gauntlets of Silvermoon",id:29998}] },
-      waist:    { best:{name:"Lightbringer Waistguard",id:34488}, alternatives:[{name:"Girdle of Mighty Resolve",id:32342},{name:"Girdle of the Protector",id:33524}] },
-      legs:     { best:{name:"Judicator's Legguards",id:34382}, alternatives:[{name:"Lightbringer Legguards",id:30995},{name:"Praetorian's Legguards",id:32263}] },
-      feet:     { best:{name:"Lightbringer Stompers",id:34560}, alternatives:[{name:"Tide-stomper's Greaves",id:32245},{name:"Blue's Greaves of the Righteous Guardian",id:34947}] },
-      ring1:    { best:{name:"Ring of Hardened Resolve",id:34213}, alternatives:[{name:"Ring of the Stalwart Protector",id:34888}] },
-      ring2:    { best:{name:"Fused Nethergon Band",id:34889}, alternatives:[{name:"Loop of Forged Power",id:34362},{name:"Band of the Eternal Sage",id:29305}] },
-      trinket1: { best:{name:"Commendation of Kael'thas",id:34473}, alternatives:[{name:"Darkmoon Card: Vengeance",id:31858}] },
-      trinket2: { best:{name:"Shadowmoon Insignia",id:32501}, alternatives:[{name:"Moroes' Lucky Pocket Watch",id:28528},{name:"Steely Naaru Sliver",id:34428}] },
-      main_hand:{ best:{name:"Tempest of Chaos",id:30910}, alternatives:[{name:"Brutal Gladiator's Gavel",id:35014},{name:"Reign of Misery",id:34176}] },
-      off_hand: { best:{name:"Sword Breaker's Bulwark",id:34185}, alternatives:[{name:"Bulwark of Azzinoth",id:32375}] },
-      libram:   { best:{name:"Tome of the Lightbringer",id:32368}, alternatives:[{name:"Libram of Repentance",id:29388},{name:"Libram of Divine Purpose",id:33504}] }
-    }
-  },
-  paladin_retribution: {
-    class: "Paladin", spec: "Retribution", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/retribution-paladin-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Duplicitous Guise",id:34244}, alternatives:[{name:"Coif of Alleria",id:34333},{name:"Mayhem Projection Goggles",id:34354},{name:"Crown of Anasterian",id:34345}] },
-      neck:     { best:{name:"Clutch of Demise",id:34177}, alternatives:[{name:"Hard Khorium Choker",id:34358},{name:"Shattered Sun Pendant of Might",id:34679}] },
-      shoulder: { best:{name:"Pauldrons of Berserking",id:34388}, alternatives:[{name:"Demontooth Shoulderpads",id:34392},{name:"Shoulderpads of Vehemence",id:34195}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Cloak of Fiends",id:33590},{name:"Cloak of Darkness (crafted)",id:33122}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Warharness of Reckless Fury",id:34215},{name:"Carapace of Sun and Shadow (crafted)",id:34369}] },
-      wrist:    { best:{name:"Lightbringer Bands",id:34431}, alternatives:[{name:"Bindings of Lightning Reflexes (crafted)",id:32574}] },
-      hands:    { best:{name:"Thalassian Ranger Gauntlets",id:34343}, alternatives:[{name:"Gloves of Immortal Dusk (crafted)",id:34370}] },
-      waist:    { best:{name:"Lightbringer Girdle",id:34485}, alternatives:[{name:"Belt of One-Hundred Deaths",id:30106}] },
-      legs:     { best:{name:"Felfury Legplates",id:34180}, alternatives:[{name:"Leggings of the Immortal Night",id:34188}] },
-      feet:     { best:{name:"Lightbringer Boots",id:34561}, alternatives:[] },
-      ring1:    { best:{name:"Hard Khorium Band",id:34361}, alternatives:[{name:"Band of Ruinous Delight",id:34189}] },
-      ring2:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Shapeshifter's Signet",id:30834}] },
-      trinket1: { best:{name:"Shard of Contempt",id:34472}, alternatives:[{name:"Blackened Naaru Sliver",id:34427}] },
-      trinket2: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      main_hand:{ best:{name:"Apolyon, the Soul-Render",id:34247}, alternatives:[{name:"Shivering Felspine",id:34183},{name:"Torch of the Damned",id:32332},{name:"The Blade of Harbingers",id:34891}] },
-      libram:   { best:{name:"Libram of Avengement",id:27484}, alternatives:[{name:"Libram of Hope",id:22401},{name:"Libram of Divine Judgement",id:33503}] }
-    }
-  },
-  paladin_holy: {
-    class: "Paladin", spec: "Holy", role: "Healer",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/holy-paladin-healer-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Helm of Burning Righteousness",id:34243}, alternatives:[{name:"Shroud of Chieftain Ner'zhul",id:34402},{name:"Justicebringer 3000 Specs (crafted)",id:35185},{name:"Lightbringer Greathelm",id:30988}] },
-      neck:     { best:{name:"Nadina's Pendant of Purity",id:32370}, alternatives:[{name:"Amulet of Flowing Life (crafted)",id:34360},{name:"Brooch of the Highborne",id:34184}] },
-      shoulder: { best:{name:"Spaulders of the Thalassian Savior",id:34193}, alternatives:[{name:"Equilibrium Epaulets",id:34208},{name:"Lightbringer Pauldrons",id:30996}] },
-      back:     { best:{name:"Shroud of Redeemed Souls",id:34205}, alternatives:[{name:"Shroud of the Highborne",id:32524},{name:"Shroud of the Final Stand",id:34012}] },
-      chest:    { best:{name:"Garments of Serene Shores",id:34229}, alternatives:[{name:"Sunblessed Breastplate (crafted)",id:34379},{name:"Noble Judicator's Chestguard",id:34395}] },
-      wrist:    { best:{name:"Lightbringer Bracers",id:34432}, alternatives:[{name:"Blessed Adamantite Bracers",id:30862},{name:"Howling Wind Bracers",id:30869}] },
-      hands:    { best:{name:"Sunblessed Gauntlets (crafted)",id:34380}, alternatives:[{name:"Gauntlets of the Soothed Soul",id:34240},{name:"Glorious Gauntlets of Crestfall",id:30112}] },
-      waist:    { best:{name:"Lightbringer Belt",id:34487}, alternatives:[{name:"Girdle of Stromgarde's Hope",id:33446}] },
-      legs:     { best:{name:"Legplates of the Holy Juggernaut",id:34167}, alternatives:[{name:"Kilt of Spiritual Reconstruction",id:34383},{name:"Lightbringer Leggings",id:30994}] },
-      feet:     { best:{name:"Lightbringer Treads",id:34559}, alternatives:[{name:"Pearl Inlaid Boots",id:32243},{name:"Boots of Courage Unending",id:30027}] },
-      ring1:    { best:{name:"Ring of Flowing Life (crafted)",id:34363}, alternatives:[{name:"Blessed Band of Karabor",id:32528}] },
-      ring2:    { best:{name:"Blessed Band of Karabor",id:32528}, alternatives:[{name:"Band of Lucent Beams",id:34166},{name:"Ring of Calming Waves",id:32238}] },
-      trinket1: { best:{name:"Glimmering Naaru Sliver",id:34430}, alternatives:[{name:"Redeemer's Alchemist Stone (crafted)",id:35750}] },
-      trinket2: { best:{name:"Memento of Tyrande",id:32496}, alternatives:[{name:"Essence of the Martyr",id:29376}] },
-      main_hand:{ best:{name:"Hammer of Sanctification",id:34335}, alternatives:[{name:"Archon's Gavel",id:34199},{name:"Crystal Spire of Karabor",id:32500},{name:"Hammer of Atonement",id:30918}] },
-      off_hand: { best:{name:"Aegis of Angelic Fortune",id:34231}, alternatives:[{name:"Book of Highborne Hymns",id:34206},{name:"Felstone Bulwark",id:32255}] },
-      libram:   { best:{name:"Libram of Souls Redeemed",id:28592}, alternatives:[{name:"Libram of Light",id:23006},{name:"Libram of Absolute Truth",id:30063}] }
-    }
-  },
-  priest_shadow: {
-    class: "Priest", spec: "Shadow", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/shadow-priest-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Dark Conjuror's Collar",id:34340}, alternatives:[{name:"Annihilator Holo-Gogs (engineering)",id:34847},{name:"Hood of Absolution",id:31064}] },
-      neck:     { best:{name:"Amulet of Unfettered Magics",id:34204}, alternatives:[{name:"Chain of the Twilight Owl",id:24121},{name:"Pendant of Sunfire (crafted)",id:34359}] },
-      shoulder: { best:{name:"Shoulderpads of Absolution",id:31070}, alternatives:[{name:"Amice of the Convoker",id:34210},{name:"Shoulderpads of Knowledge's Pursuit",id:34393}] },
-      back:     { best:{name:"Tattered Cape of Antonidas",id:34242}, alternatives:[{name:"Nethervoid Cloak",id:32590},{name:"Shadowcaster's Drape",id:33591}] },
-      chest:    { best:{name:"Sunfire Robe (crafted)",id:34364}, alternatives:[{name:"Fel Conquerer Raiments",id:34232},{name:"Robes of Ghostly Hatred",id:34399}] },
-      wrist:    { best:{name:"Bracers of Absolution",id:34434}, alternatives:[{name:"Bracers of Nimble Thought (crafted)",id:32586}] },
-      hands:    { best:{name:"Handguards of Defiled Worlds",id:34344}, alternatives:[{name:"Handguards of Absolution",id:31061},{name:"Sunfire Handwraps (crafted)",id:34366}] },
-      waist:    { best:{name:"Cord of Absolution",id:34528}, alternatives:[{name:"Waistwrap of Infinity",id:32256},{name:"Belt of Blasting (crafted)",id:30038}] },
-      legs:     { best:{name:"Leggings of Calamity",id:34181}, alternatives:[{name:"Pantaloons of Growing Strife",id:34386}] },
-      feet:     { best:{name:"Treads of Absolution",id:34563}, alternatives:[{name:"Slippers of the Seacaller",id:32239}] },
-      ring1:    { best:{name:"Ring of Omnipotence",id:34230}, alternatives:[{name:"Ring of Ancient Knowledge",id:32527}] },
-      ring2:    { best:{name:"Loop of Forged Power (crafted)",id:34362}, alternatives:[{name:"Mana Attuned Band",id:33497}] },
-      trinket1: { best:{name:"Shifting Naaru Sliver",id:34429}, alternatives:[{name:"Hex Shrunken Head",id:33829}] },
-      trinket2: { best:{name:"Hex Shrunken Head",id:33829}, alternatives:[{name:"The Skull of Gul'dan",id:32483}] },
-      main_hand:{ best:{name:"Sunflare",id:34336}, alternatives:[{name:"Reign of Misery",id:34176},{name:"Zhar'doom, Greatstaff of the Devourer",id:32374}] },
-      off_hand: { best:{name:"Heart of the Pit",id:34179}, alternatives:[{name:"Fetish of the Primal Gods",id:33334}] },
-      wand:     { best:{name:"Wand of the Demonsoul",id:34347}, alternatives:[{name:"Carved Witch Doctor's Stick",id:33192}] }
-    }
-  },
-  rogue_combat: {
-    class: "Rogue", spec: "Combat", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/rogue-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Duplicitous Guise",id:34244}, alternatives:[{name:"Cursed Vision of Sargeras",id:32235},{name:"Quad Deathblow X44 Goggles (engineering)",id:34353}] },
-      neck:     { best:{name:"Hard Khorium Choker (crafted)",id:34358}, alternatives:[{name:"Clutch of Demise",id:34177}] },
-      shoulder: { best:{name:"Slayer's Shoulderpads",id:31030}, alternatives:[{name:"Shoulderpads of Vehemence",id:34195}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Shadowmoon Destroyer's Drape",id:32323}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Carapace of Sun and Shadow (crafted)",id:34369}] },
-      wrist:    { best:{name:"Slayer's Bracers",id:34448}, alternatives:[{name:"Insidious Bands",id:32324}] },
-      hands:    { best:{name:"Gloves of Immortal Dusk (crafted)",id:34370}, alternatives:[{name:"Shadowed Gauntlets of Paroxysm",id:34234}] },
-      waist:    { best:{name:"Slayer's Belt",id:34558}, alternatives:[{name:"Belt of One-Hundred Deaths",id:30106}] },
-      legs:     { best:{name:"Leggings of the Immortal Night",id:34188}, alternatives:[{name:"Slayer's Legguards",id:31029}] },
-      feet:     { best:{name:"Slayer's Boots",id:34575}, alternatives:[{name:"Shadowmaster's Boots",id:32366}] },
-      ring1:    { best:{name:"Stormrage Signet Ring",id:32497}, alternatives:[{name:"Band of Ruinous Delight",id:34189}] },
-      ring2:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Hard Khorium Band",id:34361}] },
-      trinket1: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      trinket2: { best:{name:"Dragonspine Trophy",id:28830}, alternatives:[{name:"Warp-Spring Coil",id:30450}] },
-      main_hand:{ best:{name:"Warglaive of Azzinoth",id:32837}, alternatives:[{name:"Hand of the Deceiver",id:34331},{name:"Muramasa",id:34214}] },
-      off_hand: { best:{name:"Warglaive of Azzinoth",id:32838}, alternatives:[{name:"Blade of Savagery",id:32369},{name:"Dragonscale-Encrusted Longblade",id:34164}] },
-      ranged:   { best:{name:"Golden Bow of Quel'Thalas",id:34196}, alternatives:[{name:"Thori'dal, the Stars' Fury",id:34334}] }
-    }
-  },
-  hunter_beastmastery: {
-    class: "Hunter", spec: "Beast Mastery", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/beast-mastery-hunter-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Coif of Alleria",id:34333}, alternatives:[{name:"Duplicitous Guise",id:34244},{name:"Cursed Vision of Sargeras",id:32235}] },
-      neck:     { best:{name:"Hard Khorium Choker (crafted)",id:34358}, alternatives:[{name:"Clutch of Demise",id:34177}] },
-      shoulder: { best:{name:"Gronnstalker's Spaulders",id:31006}, alternatives:[{name:"Mantle of the Golden Forest",id:34194},{name:"Shoulderpads of Vehemence",id:34195}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Shadowmoon Destroyer's Drape",id:32323}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Vicious Hawkstrider Hauberk",id:34228},{name:"Embrace of the Phoenix (crafted)",id:34373}] },
-      wrist:    { best:{name:"Gronnstalker's Bracers",id:34443}, alternatives:[{name:"Insidious Bands",id:32324}] },
-      hands:    { best:{name:"Gloves of Immortal Dusk (crafted)",id:34370}, alternatives:[{name:"Thalassian Ranger Gauntlets",id:34343}] },
-      waist:    { best:{name:"Gronnstalker's Belt",id:34549}, alternatives:[{name:"Boneweave Girdle",id:32346}] },
-      legs:     { best:{name:"Leggings of the Immortal Night",id:34188}, alternatives:[{name:"Starstalker Legguards",id:34168}] },
-      feet:     { best:{name:"Gronnstalker's Boots",id:34570}, alternatives:[{name:"Shadowmaster's Boots",id:32366}] },
-      ring1:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Hard Khorium Band",id:34361}] },
-      ring2:    { best:{name:"Hard Khorium Band",id:34361}, alternatives:[{name:"Angelista's Revenge",id:34887}] },
-      trinket1: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      trinket2: { best:{name:"Berserker's Call",id:33831}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      main_hand:{ best:{name:"Hand of the Deceiver",id:34331}, alternatives:[{name:"Crux of the Apocalypse",id:34329},{name:"Shivering Felspine (2H)",id:34183}] },
-      ranged:   { best:{name:"Thori'dal, the Stars' Fury",id:34334}, alternatives:[{name:"Golden Bow of Quel'Thalas",id:34196}] }
-    }
-  },
-  shaman_enhancement: {
-    class: "Shaman", spec: "Enhancement", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/enhancement-shaman-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Duplicitous Guise",id:34244}, alternatives:[{name:"Coif of Alleria",id:34333},{name:"Cursed Vision of Sargeras",id:32235}] },
-      neck:     { best:{name:"Hard Khorium Choker (crafted)",id:34358}, alternatives:[{name:"Clutch of Demise",id:34177}] },
-      shoulder: { best:{name:"Demontooth Shoulderpads",id:34392}, alternatives:[{name:"Mantle of the Golden Forest",id:34194},{name:"Skyshatter Pauldrons",id:31024}] },
-      back:     { best:{name:"Cloak of Unforgivable Sin",id:34241}, alternatives:[{name:"Shadowmoon Destroyer's Drape",id:32323}] },
-      chest:    { best:{name:"Bladed Chaos Tunic",id:34397}, alternatives:[{name:"Carapace of Sun and Shadow (crafted)",id:34369}] },
-      wrist:    { best:{name:"Skyshatter Wristguards",id:34439}, alternatives:[{name:"Deadly Cuffs",id:30863}] },
-      hands:    { best:{name:"Thalassian Ranger Gauntlets",id:34343}, alternatives:[{name:"Gloves of Immortal Dusk (crafted)",id:34370}] },
-      waist:    { best:{name:"Skyshatter Girdle",id:34545}, alternatives:[{name:"Belt of One-Hundred Deaths",id:30106}] },
-      legs:     { best:{name:"Leggings of the Immortal Night",id:34188}, alternatives:[{name:"Bow-stitched Leggings",id:30900}] },
-      feet:     { best:{name:"Skyshatter Greaves",id:34567}, alternatives:[{name:"Softstep Boots of Tracking",id:32510}] },
-      ring1:    { best:{name:"Band of Ruinous Delight",id:34189}, alternatives:[{name:"Stormrage Signet Ring",id:32497}] },
-      ring2:    { best:{name:"Stormrage Signet Ring",id:32497}, alternatives:[{name:"Hard Khorium Band",id:34361}] },
-      trinket1: { best:{name:"Blackened Naaru Sliver",id:34427}, alternatives:[{name:"Dragonspine Trophy",id:28830}] },
-      trinket2: { best:{name:"Shard of Contempt",id:34472}, alternatives:[{name:"Berserker's Call",id:33831}] },
-      main_hand:{ best:{name:"Hand of the Deceiver",id:34331}, alternatives:[{name:"Brutal Gladiator's Cleaver",id:34996}] },
-      off_hand: { best:{name:"Mounting Vengeance",id:34346}, alternatives:[{name:"Vengeful Gladiator's Cleaver",id:33669}] }
-    }
-  },
-  warlock_destruction: {
-    class: "Warlock", spec: "Destruction", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/destruction-warlock-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Dark Conjuror's Collar",id:34340}, alternatives:[{name:"Cowl of the Illidari High Lord",id:32525},{name:"Annihilator Holo-Gogs (engineering)",id:34847},{name:"Hood of the Malefic",id:31051}] },
-      neck:     { best:{name:"Pendant of Sunfire (crafted)",id:34359}, alternatives:[{name:"Amulet of Unfettered Magics",id:34204}] },
-      shoulder: { best:{name:"Amice of the Convoker",id:34210}, alternatives:[{name:"Mantle of the Malefic",id:31054}] },
-      back:     { best:{name:"Tattered Cape of Antonidas",id:34242}, alternatives:[{name:"Nethervoid Cloak",id:32590},{name:"Cloak of the Illidari Council",id:32331}] },
-      chest:    { best:{name:"Sunfire Robe (crafted)",id:34364}, alternatives:[{name:"Fel Conquerer Raiments",id:34232},{name:"Robes of Ghostly Hatred",id:34399}] },
-      wrist:    { best:{name:"Bracers of the Malefic",id:34436}, alternatives:[{name:"Bracers of Nimble Thought (crafted)",id:32586}] },
-      hands:    { best:{name:"Handguards of Defiled Worlds",id:34344}, alternatives:[{name:"Gloves of Tyri's Power",id:34406},{name:"Sunfire Handwraps (crafted)",id:34366}] },
-      waist:    { best:{name:"Belt of the Malefic",id:34541}, alternatives:[{name:"Belt of Blasting (crafted)",id:30038}] },
-      legs:     { best:{name:"Leggings of Calamity",id:34181}, alternatives:[{name:"Pantaloons of Growing Strife",id:34386}] },
-      feet:     { best:{name:"Boots of the Malefic",id:34564}, alternatives:[{name:"Slippers of the Seacaller",id:32239}] },
-      ring1:    { best:{name:"Ring of Omnipotence",id:34230}, alternatives:[{name:"Loop of Forged Power (crafted)",id:34362}] },
-      ring2:    { best:{name:"Loop of Forged Power (crafted)",id:34362}, alternatives:[{name:"Mana Attuned Band",id:33497}] },
-      trinket1: { best:{name:"Shifting Naaru Sliver",id:34429}, alternatives:[{name:"The Skull of Gul'dan",id:32483}] },
-      trinket2: { best:{name:"The Skull of Gul'dan",id:32483}, alternatives:[{name:"Hex Shrunken Head",id:33829}] },
-      main_hand:{ best:{name:"Sunflare",id:34336}, alternatives:[{name:"Tempest of Chaos",id:30910},{name:"Grand Magister's Staff of Torrents (2H)",id:34182}] },
-      off_hand: { best:{name:"Heart of the Pit",id:34179}, alternatives:[{name:"Chronicle of Dark Secrets",id:30872}] },
-      wand:     { best:{name:"Wand of the Demonsoul",id:34347}, alternatives:[{name:"Wand of the Forgotten Star",id:29982}] }
-    }
-  },
-  druid_balance: {
-    class: "Druid", spec: "Balance", role: "DPS",
-    wowhead_url: "https://www.wowhead.com/tbc/guide/balance-druid-dps-swp-phase-5-best-in-slot-gear-burning-crusade",
-    slots: {
-      head:     { best:{name:"Dark Conjuror's Collar",id:34340}, alternatives:[{name:"Cover of Ursoc the Mighty",id:34403},{name:"Cowl of the Illidari High Lord",id:32525}] },
-      neck:     { best:{name:"Pendant of Sunfire (crafted)",id:34359}, alternatives:[{name:"Amulet of Unfettered Magics",id:34204}] },
-      shoulder: { best:{name:"Amice of the Convoker",id:34210}, alternatives:[{name:"Spaulders of Devastation",id:34391},{name:"Thunderheart Shoulderpads",id:31049}] },
-      back:     { best:{name:"Tattered Cape of Antonidas",id:34242}, alternatives:[{name:"Cloak of the Illidari Council",id:32331}] },
-      chest:    { best:{name:"Sunfire Robe (crafted)",id:34364}, alternatives:[{name:"Fel Conquerer Raiments",id:34232}] },
-      wrist:    { best:{name:"Thunderheart Bands",id:34446}, alternatives:[{name:"Bracers of Nimble Thought (crafted)",id:32586}] },
-      hands:    { best:{name:"Handguards of Defiled Worlds",id:34344}, alternatives:[{name:"Tranquil Moonlight Wraps",id:34407},{name:"Sunfire Handwraps (crafted)",id:34366}] },
-      waist:    { best:{name:"Thunderheart Cord",id:34555}, alternatives:[{name:"Anetheron's Noose",id:30888}] },
-      legs:     { best:{name:"Leggings of Calamity",id:34181}, alternatives:[{name:"Breeches of Natural Aggression",id:34169}] },
-      feet:     { best:{name:"Thunderheart Footwraps",id:34572}, alternatives:[{name:"Slippers of the Seacaller",id:32239}] },
-      ring1:    { best:{name:"Loop of Forged Power (crafted)",id:34362}, alternatives:[{name:"Ring of Omnipotence",id:34230}] },
-      ring2:    { best:{name:"Ring of Omnipotence",id:34230}, alternatives:[{name:"Mana Attuned Band",id:33497}] },
-      trinket1: { best:{name:"Shifting Naaru Sliver",id:34429}, alternatives:[{name:"The Skull of Gul'dan",id:32483}] },
-      trinket2: { best:{name:"The Skull of Gul'dan",id:32483}, alternatives:[{name:"Hex Shrunken Head",id:33829}] },
-      main_hand:{ best:{name:"Sunflare",id:34336}, alternatives:[{name:"Reign of Misery",id:34176},{name:"Grand Magister's Staff of Torrents (2H)",id:34182}] },
-      off_hand: { best:{name:"Heart of the Pit",id:34179}, alternatives:[{name:"Chronicle of Dark Secrets",id:30872}] },
-      idol:     { best:{name:"Idol of the Raven Goddess",id:32387}, alternatives:[{name:"Ivory Idol of the Moongoddess",id:27518}] }
-    }
+const DEFAULT_NS = { profile: 'profile-forever-{region}', dynamic: 'dynamic-forever-{region}' };
+
+// Character endpoints we always try (relative to /profile/wow/character/{realm}/{name}).
+// Any extra links the character summary returns are followed as well.
+const KNOWN_ENDPOINTS = [
+  'equipment', 'statistics', 'specializations', 'character-media', 'appearance',
+  'professions', 'reputations', 'titles', 'pvp-summary',
+  'achievements', 'achievements/statistics',
+  'encounters/raids', 'encounters/dungeons',
+  'collections/mounts', 'collections/pets', 'collections/toys', 'collections/heirlooms',
+  'collections/transmogs', 'hunter-pets', 'quests/completed', 'mythic-keystone-profile'
+];
+
+// Sections rendered with a dedicated layout, in display order.
+const SECTIONS = [
+  { id:'equipment',        title:'Gear',              render: renderEquipment },
+  { id:'statistics',       title:'Stats',             render: renderStats },
+  { id:'specializations',  title:'Talents',           render: renderTalents },
+  { id:'professions',      title:'Professions',       render: renderProfessions },
+  { id:'reputations',      title:'Reputations',       render: renderReputations },
+  { id:'encounters/raids', title:'Raid Progress',     render: renderEncounters },
+  { id:'encounters/dungeons', title:'Dungeon Progress', render: renderEncounters },
+  { id:'achievements',     title:'Achievements',      render: renderAchievements },
+  { id:'achievements/statistics', title:'Statistics', render: renderAchStats },
+  { id:'pvp-summary',      title:'PvP',               render: renderGenericSection },
+  { id:'titles',           title:'Titles',            render: renderTitles },
+  { id:'collections/mounts', title:'Mounts',          render: d => renderNameList(d.mounts, m => m.mount && m.mount.name) },
+  { id:'collections/pets', title:'Battle Pets',       render: d => renderNameList(d.pets, p => (p.species && p.species.name) + (p.level ? ` (${p.level})` : '')) },
+  { id:'collections/toys', title:'Toys',              render: d => renderNameList(d.toys, t => t.toy && t.toy.name) },
+  { id:'collections/heirlooms', title:'Heirlooms',    render: d => renderNameList(d.heirlooms, h => h.heirloom && h.heirloom.name) },
+  { id:'hunter-pets',      title:'Hunter Pets',       render: renderGenericSection },
+  { id:'quests/completed', title:'Completed Quests',  render: d => renderNameList(d.quests, q => q.name) },
+  { id:'appearance',       title:'Appearance',        render: renderGenericSection },
+];
+
+const SLOT_ORDER = ['HEAD','NECK','SHOULDER','BACK','CHEST','SHIRT','TABARD','WRIST','HANDS','WAIST','LEGS','FEET',
+  'FINGER_1','FINGER_2','TRINKET_1','TRINKET_2','MAIN_HAND','OFF_HAND','RANGED'];
+
+const CLASS_COLORS = {
+  'death knight':'#C41E3A','demon hunter':'#A330C9','druid':'#FF7C0A','evoker':'#33937F','hunter':'#AAD372',
+  'mage':'#3FC7EB','monk':'#00FF98','paladin':'#F48CBA','priest':'#FFFFFF','rogue':'#FFF468',
+  'shaman':'#0070DD','warlock':'#8788EE','warrior':'#C69B6D'
+};
+
+/* =======================================================================
+   STORAGE HELPERS (never let a storage failure break the page)
+   ======================================================================= */
+function sGet(store, k){ try{ return window[store].getItem(k); }catch(e){ return null; } }
+function sSet(store, k, v){ try{ window[store].setItem(k, v); }catch(e){} }
+function sDel(store, k){ try{ window[store].removeItem(k); }catch(e){} }
+
+/* =======================================================================
+   DOM
+   ======================================================================= */
+const $ = id => document.getElementById(id);
+const el = {
+  form: $('searchForm'), region: $('region'), realm: $('realm'), name: $('charName'), btn: $('searchBtn'),
+  clientId: $('clientId'), clientSecret: $('clientSecret'), remember: $('remember'), manualToken: $('manualToken'),
+  credState: $('credState'), credsBox: $('credsBox'), testBtn: $('testBtn'), forgetBtn: $('forgetBtn'),
+  nsProfile: $('nsProfile'), nsDynamic: $('nsDynamic'), locale: $('locale'), realmSlug: $('realmSlug'),
+  resetNsBtn: $('resetNsBtn'), nsMeta: $('nsMeta'), status: $('status'), results: $('results'), recent: $('recent')
+};
+
+/* =======================================================================
+   SMALL UTILS
+   ======================================================================= */
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function safeUrl(u){ return (typeof u === 'string' && /^https:\/\//i.test(u)) ? u : ''; }
+function labelize(k){
+  return String(k).replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function fmtNum(n){ return typeof n === 'number' ? n.toLocaleString() : esc(n); }
+function fmtDate(ts){ const d = new Date(ts); return isNaN(d) ? String(ts) : d.toLocaleString(); }
+function nameOf(v){
+  if(v == null) return '';
+  if(typeof v !== 'object') return String(v);
+  if(typeof v.display_string === 'string') return v.display_string;
+  if(v.name && typeof v.name === 'object') return nameOf(v.name);
+  if(typeof v.name === 'string') return v.name;
+  if(typeof v.type === 'string' && Object.keys(v).length <= 2) return v.type;
+  return '';
+}
+function setStatus(html, type){ el.status.innerHTML = html; el.status.className = 'status show ' + (type || 'info'); }
+function clearStatus(){ el.status.className = 'status'; el.status.innerHTML = ''; }
+function region(){ return el.region.value; }
+function ns(kind){ const raw = (kind === 'profile' ? el.nsProfile.value : el.nsDynamic.value).trim() || DEFAULT_NS[kind]; return raw.replace('{region}', region()); }
+function apiHost(){ return `https://${region()}.api.blizzard.com`; }
+function updateNsMeta(){ el.nsMeta.textContent = `${ns('profile')} · ${el.locale.value}`; }
+
+async function pool(items, limit, fn){
+  const out = new Array(items.length); let i = 0;
+  async function worker(){ while(i < items.length){ const idx = i++; out[idx] = await fn(items[idx], idx); } }
+  await Promise.all(Array.from({length: Math.min(limit, items.length)}, worker));
+  return out;
+}
+
+/* =======================================================================
+   AUTH
+   ======================================================================= */
+function loadCreds(){
+  const store = sGet('localStorage','ll_creds') ? 'localStorage' : 'sessionStorage';
+  try{
+    const c = JSON.parse(sGet(store,'ll_creds') || '{}');
+    el.clientId.value = c.id || ''; el.clientSecret.value = c.secret || '';
+    el.remember.checked = store === 'localStorage' && !!c.id;
+  }catch(e){}
+  el.manualToken.value = sGet('sessionStorage','ll_manual_token') || '';
+  refreshCredState();
+}
+function saveCreds(){
+  const c = JSON.stringify({ id: el.clientId.value.trim(), secret: el.clientSecret.value.trim() });
+  if(el.remember.checked){ sSet('localStorage','ll_creds',c); sDel('sessionStorage','ll_creds'); }
+  else { sSet('sessionStorage','ll_creds',c); sDel('localStorage','ll_creds'); }
+  const t = el.manualToken.value.trim();
+  if(t) sSet('sessionStorage','ll_manual_token', t); else sDel('sessionStorage','ll_manual_token');
+  refreshCredState();
+}
+function hasCreds(){ return !!(el.manualToken.value.trim() || (el.clientId.value.trim() && el.clientSecret.value.trim())); }
+function refreshCredState(){
+  const ok = hasCreds();
+  el.credState.textContent = ok ? 'ready' : 'not set';
+  el.credState.className = 'cred-state ' + (ok ? 'ok' : 'no');
+}
+
+let tokenCache = null; // {token, exp, id}
+async function getToken(force){
+  const manual = el.manualToken.value.trim().replace(/^Bearer\s+/i,'');
+  if(manual) return manual;
+  const id = el.clientId.value.trim(), secret = el.clientSecret.value.trim();
+  if(!id || !secret){ el.credsBox.open = true; throw new Error('Add your Blizzard API Client ID and Secret (or paste an access token) under "Blizzard API access".'); }
+  if(!force){
+    if(!tokenCache){ try{ tokenCache = JSON.parse(sGet('sessionStorage','ll_token') || 'null'); }catch(e){} }
+    if(tokenCache && tokenCache.id === id && tokenCache.exp > Date.now() + 60000) return tokenCache.token;
   }
-};
-
-// Which BIS keys to try (in order) for a given Warcraft Logs class name
-const CLASS_TO_SPECS = {
-  "Warrior": ["warrior_fury", "warrior_arms", "warrior_protection"],
-  "Paladin": ["paladin_retribution", "paladin_protection", "paladin_holy"],
-  "Mage": ["mage_frost"],
-  "Priest": ["priest_shadow"],
-  "Rogue": ["rogue_combat"],
-  "Hunter": ["hunter_beastmastery"],
-  "Shaman": ["shaman_enhancement"],
-  "Warlock": ["warlock_destruction"],
-  "Druid": ["druid_balance"]
-};
-
-const SAMPLE_GEAR = {
-  warrior_fury: {
-    head:"Onslaught Battle-Helm", neck:"Pendant of the Perilous", shoulder:"Onslaught Shoulderblades",
-    back:"Shadowmoon Destroyer's Drape", chest:"Onslaught Breastplate", wrist:"Bracers of Eradication",
-    hands:"Onslaught Gauntlets", waist:"Belt of One-Hundred Deaths", legs:"Legguards of Endless Rage",
-    feet:"Warboots of Obliteration", ring1:"Stormrage Signet Ring", ring2:"Signet of Primal Wrath",
-    trinket1:"Dragonspine Trophy", trinket2:"Tsunami Talisman", main_hand:"Dragonstrike",
-    off_hand:"Talon of Azshara", ranged:"Sunfury Bow of the Phoenix"
-  },
-  mage_frost: {
-    head:"Cowl of the Illidari High Lord", neck:"Pendant of Sunfire", shoulder:"Amice of the Convoker",
-    back:"Shroud of the Highborne", chest:"Robes of the Tempest", wrist:"Bracers of Nimble Thought",
-    hands:"Gloves of the Tempest", waist:"Anetheron's Noose", legs:"Leggings of the Tempest",
-    feet:"Slippers of the Seacaller", ring1:"Ring of Ancient Knowledge", ring2:"Band of the Eternal Sage",
-    trinket1:"The Skull of Gul'dan", trinket2:"Serpent-Coil Braid", main_hand:"Zhar'doom, Greatstaff of the Devourer",
-    off_hand:"Chronicle of Dark Secrets", wand:"Wand of the Forgotten Star"
-  }
-};
-
-const SLOT_LABELS = {
-  head:"Head", neck:"Neck", shoulder:"Shoulder", back:"Back", chest:"Chest",
-  wrist:"Wrist", hands:"Hands", waist:"Waist", legs:"Legs", feet:"Feet",
-  ring1:"Ring 1", ring2:"Ring 2", trinket1:"Trinket 1", trinket2:"Trinket 2",
-  main_hand:"Main Hand", off_hand:"Off Hand", ranged:"Ranged", wand:"Wand",
-  libram:"Libram", idol:"Idol"
-};
-
-// Standard classic/TBC inventory slot order, as returned in WCL's
-// combatantinfo `gear` array (index 0-16/17).
-const WCL_SLOT_INDEX = {
-  0:"head", 1:"neck", 2:"shoulder", 3:"shirt", 4:"chest", 5:"waist",
-  6:"legs", 7:"feet", 8:"wrist", 9:"hands", 10:"ring1", 11:"ring2",
-  12:"trinket1", 13:"trinket2", 14:"back", 15:"main_hand", 16:"off_hand", 17:"ranged"
-};
-
-const specSelect  = document.getElementById('specSelect');
-const specNote    = document.getElementById('specNote');
-const slotGrid    = document.getElementById('slotGrid');
-const resultsBody = document.getElementById('resultsBody');
-const footerLink  = document.getElementById('footerLink');
-
-const wclUrlInput   = document.getElementById('wclUrl');
-const wclParseBtn   = document.getElementById('wclParseBtn');
-const wclClientId   = document.getElementById('wclClientId');
-const wclClientSecret = document.getElementById('wclClientSecret');
-const wclFetchBtn   = document.getElementById('wclFetchBtn');
-const wclCharSelect = document.getElementById('wclCharacterSelect');
-const wclStatus     = document.getElementById('wclStatus');
-
-let parsedReport = null;      // {code, fightId}
-let wclPlayers = [];           // [{name, className, gearBySlot}]
-let currentImportedGear = null; // {slot: {id, name}} for the selected character
-
-/* ---------- helpers ---------- */
-function normalize(s){
-  return (s||"").trim().toLowerCase().replace("(crafted)","").replace("(engineering)","").trim();
-}
-function escapeHtml(str){
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
-function setWclStatus(msg, type){
-  wclStatus.textContent = msg;
-  wclStatus.className = 'wcl-status show ' + (type||'info');
-}
-function clearWclStatus(){
-  wclStatus.className = 'wcl-status';
-  wclStatus.textContent = '';
-}
-
-/* ---------- Warcraft Logs: parse URL ---------- */
-function parseWclUrl(raw){
-  let url;
-  try{ url = new URL(raw.trim()); }
-  catch(e){ throw new Error("That doesn't look like a full URL — include the https:// part."); }
-
-  const match = url.pathname.match(/reports\/([A-Za-z0-9]+)/);
-  if(!match) throw new Error("Couldn't find a report code in that URL (expected .../reports/XXXXXXXX).");
-  const code = match[1];
-
-  const fightParam = url.searchParams.get('fight');
-  if(!fightParam) throw new Error("No ?fight= number in that URL. Open the report, click a specific pull in the fight list, then copy the URL from your address bar.");
-  if(!/^\d+$/.test(fightParam)) throw new Error(`"fight=${fightParam}" isn't a plain number — click an individual fight rather than using a "last"/"latest" link.`);
-
-  return { code, fightId: parseInt(fightParam, 10) };
-}
-
-/* ---------- Warcraft Logs: API calls ---------- */
-async function wclFetchToken(clientId, clientSecret){
   let resp;
   try{
-    resp = await fetch('https://www.warcraftlogs.com/oauth/token', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret),
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'grant_type=client_credentials'
+    resp = await fetch('https://oauth.battle.net/token', {
+      method:'POST',
+      headers:{ 'Authorization':'Basic ' + btoa(id + ':' + secret), 'Content-Type':'application/x-www-form-urlencoded' },
+      body:'grant_type=client_credentials'
     });
   }catch(e){
-    throw new Error("Couldn't reach Warcraft Logs from the browser (likely blocked by CORS). This API may not allow direct browser calls — try the Python CLI version of this tool instead.");
+    throw new Error("The browser couldn't reach oauth.battle.net (network or CORS error). Make a token with the curl command under \"Blizzard API access\" and paste it there instead.");
   }
-  if(!resp.ok) throw new Error(`Token request failed (HTTP ${resp.status}). Double-check your Client ID/Secret.`);
-  const json = await resp.json();
-  if(!json.access_token) throw new Error("No access token in the response — check your credentials.");
-  return json.access_token;
+  if(resp.status === 401 || resp.status === 400) throw new Error('Blizzard rejected those credentials (HTTP ' + resp.status + '). Double-check your Client ID and Secret.');
+  if(!resp.ok) throw new Error('Token request failed (HTTP ' + resp.status + ').');
+  const j = await resp.json();
+  if(!j.access_token) throw new Error('No access token in the response.');
+  tokenCache = { token: j.access_token, exp: Date.now() + (j.expires_in || 3600) * 1000, id };
+  sSet('sessionStorage','ll_token', JSON.stringify(tokenCache));
+  return j.access_token;
 }
 
-async function wclFetchReport(token, code, fightId){
-  const query = `
-    query($code:String!, $fightIds:[Int]!){
-      reportData{
-        report(code:$code){
-          title
-          masterData{ actors(type:"Player"){ id name subType } }
-          events(fightIDs:$fightIds, dataType: CombatantInfo, limit: 100){ data }
-        }
-      }
-    }`;
+/* =======================================================================
+   API
+   ======================================================================= */
+async function api(pathOrUrl, namespace, retried){
+  const url = new URL(/^https?:/.test(pathOrUrl) ? pathOrUrl : apiHost() + pathOrUrl);
+  if(namespace && !url.searchParams.has('namespace')) url.searchParams.set('namespace', namespace);
+  url.searchParams.set('locale', el.locale.value);
+  const token = await getToken();
   let resp;
   try{
-    resp = await fetch('https://www.warcraftlogs.com/api/v2/client', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { code, fightIds: [fightId] } })
-    });
+    resp = await fetch(url.toString(), { headers:{ 'Authorization':'Bearer ' + token } });
   }catch(e){
-    throw new Error("Couldn't reach the Warcraft Logs API (network/CORS error).");
+    return { ok:false, status:0, error:'Network/CORS error', url: url.toString() };
   }
-  if(!resp.ok) throw new Error(`Warcraft Logs API request failed (HTTP ${resp.status}).`);
-  const json = await resp.json();
-  if(json.errors) throw new Error(json.errors.map(e=>e.message).join('; '));
-  const report = json.data && json.data.reportData && json.data.reportData.report;
-  if(!report) throw new Error("Report not found. Check the URL and make sure the report is public.");
-  return report;
+  if(resp.status === 401 && !retried && !el.manualToken.value.trim()){
+    tokenCache = null; sDel('sessionStorage','ll_token');
+    await getToken(true);
+    return api(pathOrUrl, namespace, true);
+  }
+  let json = null;
+  try{ json = await resp.json(); }catch(e){}
+  return { ok: resp.ok, status: resp.status, json, url: url.toString() };
 }
 
-function buildPlayerList(report){
-  const actors = (report.masterData && report.masterData.actors) || [];
-  const actorById = {};
-  actors.forEach(a => actorById[a.id] = a);
-
-  const rawEvents = (report.events && report.events.data) || [];
-  const players = [];
-  rawEvents.forEach(ev => {
-    if(ev.type !== 'combatantinfo') return;
-    const actor = actorById[ev.sourceID];
-    if(!actor) return;
-    const gearBySlot = {};
-    (ev.gear || []).forEach((item, i) => {
-      const slot = WCL_SLOT_INDEX[i];
-      if(!slot || slot === 'shirt' || !item || !item.id) return;
-      gearBySlot[slot] = { id: item.id, name: item.name || null };
-    });
-    players.push({ name: actor.name, className: actor.subType, gearBySlot });
-  });
-  return players;
+let realmCache = {}; // region -> [{name, slug, id}]
+async function loadRealms(){
+  const r = region();
+  if(realmCache[r]) { fillRealmSelect(realmCache[r]); return realmCache[r]; }
+  const res = await api('/data/wow/realm/index', ns('dynamic'));
+  if(res.status === 401) throw new Error('Blizzard rejected the access token (HTTP 401). Check your credentials.');
+  if(!res.ok || !res.json || !Array.isArray(res.json.realms)){
+    throw new Error(`Couldn't load the realm list for ${r.toUpperCase()} (HTTP ${res.status}). The namespace <code>${esc(ns('dynamic'))}</code> may be wrong; check the Advanced settings.`);
+  }
+  const realms = res.json.realms.map(x => ({ name: nameOf(x) || x.slug, slug: x.slug, id: x.id }))
+                                .sort((a,b) => a.name.localeCompare(b.name));
+  realmCache[r] = realms;
+  fillRealmSelect(realms);
+  return realms;
+}
+function fillRealmSelect(realms){
+  const prev = el.realm.value;
+  el.realm.innerHTML = `<option value="">Auto-detect (search all ${realms.length})</option>` +
+    realms.map(x => `<option value="${esc(x.slug)}">${esc(x.name)}</option>`).join('');
+  if(realms.some(x => x.slug === prev)) el.realm.value = prev;
 }
 
-/* ---------- spec / slot grid ---------- */
-function populateSpecSelect(){
-  Object.keys(BIS_DATA).forEach(key=>{
-    const entry = BIS_DATA[key];
-    const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = `${entry.class} — ${entry.spec} (${entry.role})`;
-    specSelect.appendChild(opt);
-  });
-  ["Priest — Holy (Healer)","Rogue — Assassination/Subtlety (DPS)",
-   "Hunter — Marksmanship (DPS)","Hunter — Survival (DPS)",
-   "Shaman — Elemental (DPS)","Shaman — Restoration (Healer)",
-   "Warlock — Affliction (DPS)","Warlock — Demonology (DPS)",
-   "Druid — Feral DPS (Cat)","Druid — Feral Tank (Bear)","Druid — Restoration (Healer)",
-   "Mage — Arcane (DPS)","Mage — Fire (DPS)"]
-   .forEach(label=>{
-      const opt = document.createElement('option');
-      opt.textContent = `${label} — not added yet`;
-      opt.disabled = true;
-      specSelect.appendChild(opt);
-   });
+function characterBase(realmSlug, name){
+  return `/profile/wow/character/${encodeURIComponent(realmSlug)}/${encodeURIComponent(name.toLowerCase())}`;
 }
 
-function getSavedGear(specKey){
+/* =======================================================================
+   SEARCH FLOW
+   ======================================================================= */
+let current = null; // {summary, data:{endpoint: {ok,status,json}}, realmSlug, name}
+
+function parseNameInput(raw){
+  const parts = raw.trim().split(/\s+/).filter(Boolean);
+  return { name: parts[0] || '', surname: parts.slice(1).join(' ') };
+}
+function surnameOf(summary){
+  if(!summary) return '';
+  for(const k of ['surname','last_name','family_name','lastname']){
+    if(summary[k]) return nameOf(summary[k]) || String(summary[k]);
+  }
+  return '';
+}
+
+async function search(){
+  clearStatus();
+  saveCreds();
+  const { name, surname } = parseNameInput(el.name.value);
+  if(!name){ setStatus('Enter a character name.', 'error'); el.name.focus(); return; }
+
+  el.btn.disabled = true;
   try{
-    const raw = sessionStorage.getItem('gear_'+specKey);
-    return raw ? JSON.parse(raw) : {};
-  }catch(e){ return {}; }
-}
+    const manualSlug = el.realmSlug.value.trim().toLowerCase();
+    const chosen = manualSlug || el.realm.value;
+    let matches = [];
 
-function buildSlotGrid(specKey){
-  slotGrid.innerHTML = "";
-  const entry = BIS_DATA[specKey];
-  const saved = getSavedGear(specKey);
-
-  Object.keys(entry.slots).forEach(slotKey=>{
-    const wrap = document.createElement('div');
-    wrap.className = 'slot';
-
-    const labelRow = document.createElement('div');
-    labelRow.className = 'slot-label-row';
-    const label = document.createElement('label');
-    label.textContent = SLOT_LABELS[slotKey] || slotKey;
-    label.setAttribute('for', `slot-${slotKey}`);
-    labelRow.appendChild(label);
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = `slot-${slotKey}`;
-    input.placeholder = 'Item name…';
-    input.autocomplete = 'off';
-
-    const imported = currentImportedGear && currentImportedGear[slotKey];
-    if(imported){
-      wrap.classList.add('imported');
-      input.value = imported.name || `Item #${imported.id}`;
-      input.dataset.itemId = imported.id;
-      const tag = document.createElement('span');
-      tag.className = 'imported-tag';
-      tag.textContent = 'FROM LOG';
-      labelRow.appendChild(tag);
+    if(chosen){
+      setStatus(`<span class="spinner"></span>Looking up ${esc(name)} on ${esc(chosen)}…`);
+      const res = await api(characterBase(chosen, name), ns('profile'));
+      if(res.ok && res.json) matches.push({ realmSlug: chosen, summary: res.json });
+      else if(res.status && res.status !== 404) throw new Error(describeFailure(res));
     } else {
-      input.value = saved[slotKey] || '';
-      input.addEventListener('input', ()=>{ delete input.dataset.itemId; });
+      setStatus('<span class="spinner"></span>Loading realm list…');
+      const realms = await loadRealms();
+      let done = 0;
+      setStatus(`<span class="spinner"></span>Searching ${realms.length} realms for "${esc(name)}"…`);
+      let firstError = null;
+      await pool(realms, 8, async realm => {
+        const res = await api(characterBase(realm.slug, name), ns('profile'));
+        done++;
+        if(done % 5 === 0) setStatus(`<span class="spinner"></span>Searching realms for "${esc(name)}"… ${done}/${realms.length}`);
+        if(res.ok && res.json) matches.push({ realmSlug: realm.slug, summary: res.json });
+        else if(res.status !== 404 && !firstError) firstError = res;
+      });
+      if(!matches.length && firstError && firstError.status !== 0) throw new Error(describeFailure(firstError));
     }
 
-    wrap.appendChild(labelRow);
-    wrap.appendChild(input);
-
-    if(imported && !imported.name){
-      const link = document.createElement('a');
-      link.className = 'id-link';
-      link.href = `https://www.wowhead.com/tbc/item=${imported.id}`;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      link.textContent = 'View on Wowhead ↗';
-      wrap.appendChild(link);
+    if(surname && matches.length > 1){
+      const narrowed = matches.filter(m => surnameOf(m.summary).toLowerCase() === surname.toLowerCase());
+      if(narrowed.length) matches = narrowed;
     }
 
-    slotGrid.appendChild(wrap);
-  });
-}
-
-function readCurrentGear(specKey){
-  const entry = BIS_DATA[specKey];
-  const gear = {};
-  Object.keys(entry.slots).forEach(slotKey=>{
-    const el = document.getElementById(`slot-${slotKey}`);
-    if(el && el.value.trim()){
-      gear[slotKey] = { text: el.value.trim(), id: el.dataset.itemId ? parseInt(el.dataset.itemId,10) : null };
-    }
-  });
-  return gear;
-}
-
-function updateSpecNote(){
-  const entry = BIS_DATA[specSelect.value];
-  specNote.innerHTML = `Data verified against Wowhead's live Phase 5 guide. <a href="${entry.wowhead_url}" target="_blank" rel="noopener">View source guide ↗</a>`;
-  footerLink.innerHTML = `Currently loaded: <a href="${entry.wowhead_url}" target="_blank" rel="noopener">${entry.class} ${entry.spec} BiS guide ↗</a>`;
-}
-
-function resetResultsEmpty(){
-  resultsBody.innerHTML = `
-    <div class="empty-state">
-      <div class="glyph">⚔</div>
-      <p>Import a log or fill in your gear on the left, then hit <strong>Analyze Gear</strong> to see what's worth chasing this phase.</p>
-    </div>`;
-}
-
-/* ---------- analysis ---------- */
-function analyze(){
-  const specKey = specSelect.value;
-  const entry = BIS_DATA[specKey];
-  const gear = readCurrentGear(specKey);
-
-  const savedForStorage = {};
-  Object.keys(gear).forEach(k => savedForStorage[k] = gear[k].text);
-  sessionStorage.setItem('gear_'+specKey, JSON.stringify(savedForStorage));
-
-  const slotOrder = ["main_hand","off_hand","ranged","wand","head","chest","legs","shoulder",
-                      "trinket1","trinket2","ring1","ring2","hands","waist","feet","wrist","neck","back"];
-
-  const recs = Object.keys(entry.slots).map(slotKey=>{
-    const bisInfo = entry.slots[slotKey];
-    const equipped = gear[slotKey] || null;
-
-    let status;
-    if(!equipped){
-      status = 'missing';
-    } else if(equipped.id){
-      // exact ID match (from a Warcraft Logs import) — most reliable
-      if(equipped.id === bisInfo.best.id) status = 'bis';
-      else if(bisInfo.alternatives.some(a=>a.id===equipped.id)) status = 'alt';
-      else status = 'upgrade';
-    } else {
-      // fall back to normalized name matching (manual entry)
-      const eqNorm = normalize(equipped.text);
-      if(eqNorm === normalize(bisInfo.best.name)) status = 'bis';
-      else if(bisInfo.alternatives.some(a=>normalize(a.name)===eqNorm)) status = 'alt';
-      else status = 'upgrade';
-    }
-
-    return { slotKey, bisInfo, equipped, status };
-  }).sort((a,b)=>{
-    const ai = slotOrder.indexOf(a.slotKey), bi = slotOrder.indexOf(b.slotKey);
-    return (ai<0?999:ai) - (bi<0?999:bi);
-  });
-
-  renderResults(entry, recs);
-}
-
-function renderResults(entry, recs){
-  const bisCount = recs.filter(r=>r.status==='bis').length;
-  const total = recs.length;
-  const pct = Math.round((bisCount/total)*100);
-
-  const statusMeta = {
-    bis:     {label:'BiS',        cls:'status-bis'},
-    alt:     {label:'Viable Alt', cls:'status-alt'},
-    upgrade: {label:'Upgrade',    cls:'status-upgrade'},
-    missing: {label:'Missing',    cls:'status-missing'}
-  };
-
-  const upgrades = recs.filter(r=>r.status!=='bis');
-  const achieved = recs.filter(r=>r.status==='bis');
-
-  let html = `
-    <div class="score-row"><span class="big">${bisCount}</span><span class="of">/ ${total} slots at Best-in-Slot</span></div>
-    <div class="bar"><div style="width:${pct}%"></div></div>
-    <div class="legend">
-      <span><i class="dot" style="background:var(--green)"></i>BiS</span>
-      <span><i class="dot" style="background:var(--purple)"></i>Viable Alt</span>
-      <span><i class="dot" style="background:var(--orange)"></i>Upgrade available</span>
-      <span><i class="dot" style="background:var(--red)"></i>Missing</span>
-    </div>
-    <div class="cards">
-  `;
-
-  function currentDisplay(r){
-    if(!r.equipped) return '(empty / not entered)';
-    if(r.equipped.id && !r.equipped.text.startsWith('Item #')){
-      return `${escapeHtml(r.equipped.text)} <a href="https://www.wowhead.com/tbc/item=${r.equipped.id}" target="_blank" rel="noopener">↗</a>`;
-    }
-    if(r.equipped.id){
-      return `<a href="https://www.wowhead.com/tbc/item=${r.equipped.id}" target="_blank" rel="noopener">${escapeHtml(r.equipped.text)} ↗</a>`;
-    }
-    return escapeHtml(r.equipped.text);
-  }
-
-  if(upgrades.length === 0){
-    html += `<div class="card status-bis"><div class="card-line">Every tracked slot is already Best-in-Slot. Nothing left to chase this phase.</div></div>`;
-  } else {
-    upgrades.forEach(r=>{
-      const meta = statusMeta[r.status];
-      const label = SLOT_LABELS[r.slotKey] || r.slotKey;
-      html += `
-        <div class="card ${meta.cls}">
-          <div class="card-top">
-            <span class="card-slot">${label}</span>
-            <span class="status-pill">${meta.label}</span>
-          </div>
-          <div class="card-line"><span class="k">Have</span><span class="v">${currentDisplay(r)}</span></div>
-          <div class="card-line"><span class="k">Target</span><span class="v bis-name">${escapeHtml(r.bisInfo.best.name)}</span></div>
-          ${r.bisInfo.alternatives.length ? `<div class="card-alts">Also good: ${r.bisInfo.alternatives.map(a=>escapeHtml(a.name)).join(', ')}</div>` : ''}
-        </div>
-      `;
-    });
-  }
-
-  html += `</div>`;
-
-  if(achieved.length){
-    html += `
-      <div class="bis-block">
-        <h3>Already Best-in-Slot (${achieved.length})</h3>
-        <div class="bis-list">
-          ${achieved.map(r=>`<span>${SLOT_LABELS[r.slotKey]}: ${escapeHtml(r.equipped.text)}</span>`).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  resultsBody.innerHTML = html;
-}
-
-/* ---------- wiring: spec + manual actions ---------- */
-populateSpecSelect();
-specSelect.value = 'warrior_fury';
-buildSlotGrid(specSelect.value);
-updateSpecNote();
-
-specSelect.addEventListener('change', ()=>{
-  buildSlotGrid(specSelect.value);
-  updateSpecNote();
-  resetResultsEmpty();
-});
-
-document.getElementById('analyzeBtn').addEventListener('click', analyze);
-
-document.getElementById('clearBtn').addEventListener('click', ()=>{
-  currentImportedGear = null;
-  document.querySelectorAll('#slotGrid input').forEach(i=>{ i.value=''; delete i.dataset.itemId; });
-  sessionStorage.removeItem('gear_'+specSelect.value);
-  buildSlotGrid(specSelect.value);
-  resetResultsEmpty();
-});
-
-document.getElementById('sampleBtn').addEventListener('click', ()=>{
-  currentImportedGear = null;
-  buildSlotGrid(specSelect.value);
-  const sample = SAMPLE_GEAR[specSelect.value];
-  if(!sample) return;
-  Object.keys(sample).forEach(slotKey=>{
-    const el = document.getElementById(`slot-${slotKey}`);
-    if(el) el.value = sample[slotKey];
-  });
-});
-
-/* ---------- wiring: Warcraft Logs import ---------- */
-wclParseBtn.addEventListener('click', ()=>{
-  try{
-    parsedReport = parseWclUrl(wclUrlInput.value);
-    setWclStatus(`Parsed — report ${parsedReport.code}, fight ${parsedReport.fightId}. Add your API credentials below, then Fetch Characters.`, 'success');
-  }catch(e){
-    parsedReport = null;
-    setWclStatus(e.message, 'error');
-  }
-});
-
-wclFetchBtn.addEventListener('click', async ()=>{
-  clearWclStatus();
-  if(!parsedReport){
-    try{ parsedReport = parseWclUrl(wclUrlInput.value); }
-    catch(e){ setWclStatus(e.message, 'error'); return; }
-  }
-  const clientId = wclClientId.value.trim();
-  const clientSecret = wclClientSecret.value.trim();
-  if(!clientId || !clientSecret){
-    setWclStatus("Enter your Warcraft Logs Client ID and Secret first (expand the section above).", 'error');
-    return;
-  }
-
-  wclFetchBtn.disabled = true;
-  wclCharSelect.classList.remove('show');
-  setWclStatus('Contacting Warcraft Logs…', 'info');
-
-  try{
-    const token = await wclFetchToken(clientId, clientSecret);
-    const report = await wclFetchReport(token, parsedReport.code, parsedReport.fightId);
-    wclPlayers = buildPlayerList(report);
-
-    if(wclPlayers.length === 0){
-      setWclStatus("Connected, but found no player combat data for that fight — double check the fight number.", 'error');
+    if(!matches.length){
+      setStatus(`No character named "${esc(name)}" found${chosen ? ' on ' + esc(chosen) : ' in ' + region().toUpperCase()}. Note: Blizzard only serves profiles for characters that have logged in recently and are level 10 or higher, and a few minutes may pass before a new character shows up.`, 'error');
       return;
     }
+    if(matches.length === 1){ await openCharacter(matches[0].realmSlug, matches[0].summary); return; }
 
-    wclCharSelect.innerHTML = '<option value="">Select a character…</option>';
-    wclPlayers.forEach((p, i)=>{
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `${p.name} (${p.className || 'Unknown class'})`;
-      wclCharSelect.appendChild(opt);
-    });
-    wclCharSelect.classList.add('show');
-    setWclStatus(`Found ${wclPlayers.length} player${wclPlayers.length===1?'':'s'} in "${report.title || 'this report'}". Pick your character below.`, 'success');
+    clearStatus();
+    renderMatches(matches);
   }catch(e){
-    setWclStatus(e.message, 'error');
+    setStatus(e.message, 'error');
   }finally{
-    wclFetchBtn.disabled = false;
+    el.btn.disabled = false;
   }
-});
+}
 
-wclCharSelect.addEventListener('change', ()=>{
-  const idx = wclCharSelect.value;
-  if(idx === '') return;
-  const player = wclPlayers[parseInt(idx,10)];
-  currentImportedGear = player.gearBySlot;
+function describeFailure(res){
+  if(res.status === 401) return 'Blizzard rejected the access token (HTTP 401). Check your credentials.';
+  if(res.status === 403) return `Access denied (HTTP 403) for namespace <code>${esc(ns('profile'))}</code>. The namespace may be wrong; check the Advanced settings.`;
+  if(res.status === 0) return "Couldn't reach the Blizzard API (network/CORS error).";
+  return `Blizzard API error (HTTP ${res.status}).`;
+}
 
-  const candidateSpecs = CLASS_TO_SPECS[player.className] || [];
-  if(candidateSpecs.length){
-    specSelect.value = candidateSpecs[0];
-    updateSpecNote();
-    setWclStatus(`Loaded gear for ${player.name} (${player.className}). Matched slots are marked "FROM LOG" below.`, 'success');
-  } else {
-    setWclStatus(`Loaded gear for ${player.name} (${player.className}), but there's no BiS data for that class yet — showing raw item data only.`, 'info');
+function renderMatches(matches){
+  el.results.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h2>${matches.length} characters found</h2><span class="meta">pick one</span></div>
+      <div class="panel-body"><div class="matches">
+        ${matches.map((m, i) => {
+          const s = m.summary;
+          const sur = surnameOf(s);
+          return `<button class="match" data-i="${i}">
+            <div class="n" style="color:${classColor(s)}">${esc(s.name)}${sur ? ' ' + esc(sur) : ''}</div>
+            <div class="d">Level ${esc(s.level ?? '?')} ${esc(nameOf(s.race))} ${esc(nameOf(s.character_class))}</div>
+            <div class="d">${esc(nameOf(s.realm) || m.realmSlug)}${s.guild ? ' · &lt;' + esc(nameOf(s.guild)) + '&gt;' : ''}</div>
+          </button>`;
+        }).join('')}
+      </div></div>
+    </div>`;
+  el.results.querySelectorAll('.match').forEach(b => b.addEventListener('click', () => {
+    const m = matches[+b.dataset.i];
+    openCharacter(m.realmSlug, m.summary);
+  }));
+}
+
+function endpointKey(href, base){
+  try{
+    const p = new URL(href).pathname;
+    const i = p.indexOf('/profile/wow/character/');
+    if(i < 0) return null;
+    const rest = p.slice(i + '/profile/wow/character/'.length).split('/').slice(2).join('/');
+    return rest || null;
+  }catch(e){ return null; }
+}
+
+function collectSummaryLinks(summary){
+  const links = {};
+  (function walk(obj, depth){
+    if(!obj || typeof obj !== 'object' || depth > 2) return;
+    for(const [k, v] of Object.entries(obj)){
+      if(k === '_links' || k === 'character' || k === 'realm' || k === 'guild') continue;
+      if(v && typeof v === 'object'){
+        if(typeof v.href === 'string'){
+          const key = endpointKey(v.href);
+          if(key) links[key] = v.href;
+        } else walk(v, depth + 1);
+      }
+    }
+  })(summary, 0);
+  return links;
+}
+
+async function openCharacter(realmSlug, summary){
+  const name = summary.name || parseNameInput(el.name.value).name;
+  try{ history.replaceState(null, '', `#${region()}/${realmSlug}/${encodeURIComponent(name.toLowerCase())}`); }catch(e){}
+  addRecent({ region: region(), realm: realmSlug, name, label: `${name} · ${nameOf(summary.realm) || realmSlug} (${region().toUpperCase()})` });
+
+  const base = characterBase(realmSlug, name);
+  const links = collectSummaryLinks(summary);
+  KNOWN_ENDPOINTS.forEach(k => { if(!links[k]) links[k] = apiHost() + base + '/' + k; });
+  const keys = Object.keys(links);
+
+  setStatus(`<span class="spinner"></span>Loading ${keys.length} data sets for ${esc(name)}…`);
+  const data = {};
+  await pool(keys, 8, async k => { data[k] = await api(links[k], ns('profile')); });
+
+  current = { summary, data, realmSlug, name };
+  const okCount = keys.filter(k => data[k].ok).length;
+  setStatus(`Loaded ${esc(name)}: ${okCount + 1} of ${keys.length + 1} API endpoints returned data.`, 'success');
+  renderCharacter();
+  loadItemIcons();
+}
+
+/* =======================================================================
+   RENDER: CHARACTER
+   ======================================================================= */
+function classColor(s){ return CLASS_COLORS[(nameOf(s && s.character_class) || '').toLowerCase()] || 'var(--gold-bright)'; }
+
+function mediaUrl(mediaJson){
+  if(!mediaJson) return { main:'', avatar:'' };
+  const assets = {};
+  (mediaJson.assets || []).forEach(a => assets[a.key] = a.value);
+  return {
+    main: safeUrl(assets['main-raw'] || assets['main'] || mediaJson.render_url || assets['inset'] || ''),
+    avatar: safeUrl(assets['avatar'] || mediaJson.avatar_url || '')
+  };
+}
+
+const SUMMARY_HANDLED = new Set(['_links','id','name','gender','faction','race','character_class','active_spec','realm','guild',
+  'level','experience','achievement_points','last_login_timestamp','average_item_level','equipped_item_level','active_title',
+  'is_ghost','is_self_found']);
+
+function renderCharacter(){
+  const { summary: s, data } = current;
+  const media = mediaUrl(data['character-media'] && data['character-media'].ok ? data['character-media'].json : null);
+  const sur = surnameOf(s);
+  const title = s.active_title && s.active_title.display_string
+    ? s.active_title.display_string.replace('{name}', s.name + (sur ? ' ' + sur : '')) : '';
+  const faction = (s.faction && s.faction.type || '').toLowerCase();
+
+  const facts = [];
+  if(s.level != null) facts.push(['Level', s.level, true]);
+  if(s.equipped_item_level != null) facts.push(['Item Level', s.equipped_item_level, true]);
+  if(s.average_item_level != null && s.average_item_level !== s.equipped_item_level) facts.push(['Avg Item Level', s.average_item_level]);
+  if(s.achievement_points != null) facts.push(['Achievement Pts', fmtNum(s.achievement_points)]);
+  if(s.experience != null) facts.push(['Experience', fmtNum(s.experience)]);
+  if(s.last_login_timestamp) facts.push(['Last Login', fmtDate(s.last_login_timestamp)]);
+  if(s.gender) facts.push(['Gender', nameOf(s.gender)]);
+  if(s.is_ghost) facts.push(['Status', 'Ghost']);
+  if(s.is_self_found) facts.push(['Self-Found', 'Yes']);
+  // Every other simple field Blizzard sends (picks up Forever-specific fields such as a surname).
+  for(const [k, v] of Object.entries(s)){
+    if(SUMMARY_HANDLED.has(k)) continue;
+    if(v == null || (typeof v === 'object' && v.href)) continue;
+    const disp = (typeof v === 'object') ? nameOf(v) : (/timestamp/.test(k) ? fmtDate(v) : v);
+    if(disp !== '' && typeof disp !== 'object') facts.push([labelize(k), typeof disp === 'number' ? fmtNum(disp) : disp]);
   }
 
-  buildSlotGrid(specSelect.value);
-  resetResultsEmpty();
+  const available = SECTIONS.filter(sec => data[sec.id] && data[sec.id].ok);
+  const extraKeys = Object.keys(data).filter(k => data[k].ok && !SECTIONS.some(sec => sec.id === k) && k !== 'character-media');
+
+  let html = `
+    <div class="panel">
+      <div class="hero">
+        <div class="hero-art">${media.main ? `<img src="${esc(media.main)}" alt="${esc(s.name)} character render" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'placeholder',textContent:'⚔'}))">`
+                                          : media.avatar ? `<img src="${esc(media.avatar)}" alt="${esc(s.name)} avatar" style="max-height:160px;align-self:center">`
+                                          : `<div class="placeholder">⚔</div>`}</div>
+        <div class="hero-info">
+          ${title ? `<p class="hero-title">${esc(title)}</p>` : ''}
+          <h2 class="hero-name" style="color:${classColor(s)}">${esc(s.name)}${sur ? ' <span style="color:var(--parchment)">' + esc(sur) + '</span>' : ''}</h2>
+          <p class="hero-line">
+            <strong>${esc(nameOf(s.race))}</strong> ${s.active_spec ? esc(nameOf(s.active_spec)) + ' ' : ''}<strong>${esc(nameOf(s.character_class))}</strong>
+            ${s.guild ? ` · &lt;${esc(nameOf(s.guild))}&gt;` : ''}
+          </p>
+          <div class="badges">
+            ${faction ? `<span class="badge ${esc(faction)}">${esc(nameOf(s.faction))}</span>` : ''}
+            <span class="badge">${esc(nameOf(s.realm) || current.realmSlug)}</span>
+            <span class="badge">${esc(region().toUpperCase())}</span>
+          </div>
+          <div class="facts">
+            ${facts.map(([k, v, big]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v${big ? ' big' : ''}">${esc(v)}</div></div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="jump" aria-label="Sections">
+      ${available.map(sec => `<a href="#sec-${slugId(sec.id)}">${esc(sec.title)}</a>`).join('')}
+      ${extraKeys.map(k => `<a href="#sec-${slugId(k)}">${esc(labelize(k.replace(/[\/-]/g,' ')))}</a>`).join('')}
+      <a href="#sec-unavailable">Unavailable</a>
+      <a href="#sec-raw">Raw JSON</a>
+    </nav>
+  `;
+
+  available.forEach(sec => {
+    let body;
+    try{ body = sec.render(data[sec.id].json); }
+    catch(e){ console.error(sec.id, e); body = renderGenericSection(data[sec.id].json); }
+    html += sectionPanel(sec.id, sec.title, body, countFor(sec.id, data[sec.id].json));
+  });
+  extraKeys.forEach(k => {
+    html += sectionPanel(k, labelize(k.replace(/[\/-]/g,' ')), renderGenericSection(data[k].json));
+  });
+
+  const missing = Object.keys(data).filter(k => !data[k].ok);
+  html += sectionPanel('unavailable', 'Not Available', missing.length
+    ? `<p class="field-hint" style="margin-top:0">Blizzard didn't return these for this character. Forever may not support them yet, or the character has no data for them.</p>
+       <div class="chips">${missing.map(k => `<span>${esc(k)} <span class="muted" style="color:var(--sepia)">· ${data[k].status || 'network'}</span></span>`).join('')}</div>`
+    : `<p class="na">Every endpoint returned data.</p>`);
+
+  const rawKeys = ['summary', ...Object.keys(data).filter(k => data[k].ok)];
+  html += sectionPanel('raw', 'Raw JSON', `
+    <div class="raw-tools">
+      <select id="rawPick">${rawKeys.map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join('')}</select>
+      <button class="ghost" id="copyRaw" type="button">Copy</button>
+      <button class="ghost" id="dlRaw" type="button">Download all (.json)</button>
+    </div>
+    <pre class="raw" id="rawView"></pre>`);
+
+  el.results.innerHTML = html;
+  wireRaw();
+  el.results.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const inp = document.getElementById(b.dataset.copy);
+    try{ navigator.clipboard.writeText(inp.value); b.textContent = 'Copied'; }catch(e){ inp.select(); }
+  }));
+}
+
+function slugId(k){ return k.replace(/[^a-z0-9]+/gi,'-'); }
+function sectionPanel(id, title, body, meta){
+  return `<section class="panel" id="sec-${slugId(id)}">
+    <div class="panel-head"><h2>${esc(title)}</h2>${meta ? `<span class="meta">${esc(meta)}</span>` : ''}</div>
+    <div class="panel-body">${body}</div></section>`;
+}
+function countFor(id, d){
+  if(!d) return '';
+  const arr = { 'equipment':d.equipped_items, 'reputations':d.reputations, 'titles':d.titles, 'collections/mounts':d.mounts,
+    'collections/pets':d.pets, 'collections/toys':d.toys, 'collections/heirlooms':d.heirlooms, 'quests/completed':d.quests }[id];
+  if(Array.isArray(arr)) return `${arr.length} total`;
+  if(id === 'achievements' && d.total_quantity != null) return `${fmtNum(d.total_quantity)} earned · ${fmtNum(d.total_points || 0)} pts`;
+  return '';
+}
+
+function wireRaw(){
+  const pick = $('rawPick'), view = $('rawView');
+  const get = k => k === 'summary' ? current.summary : current.data[k].json;
+  const show = () => { view.textContent = JSON.stringify(get(pick.value), null, 2); };
+  pick.addEventListener('change', show); show();
+  $('copyRaw').addEventListener('click', e => { try{ navigator.clipboard.writeText(view.textContent); e.target.textContent = 'Copied'; }catch(err){} });
+  $('dlRaw').addEventListener('click', () => {
+    const all = { region: region(), realm: current.realmSlug, fetched_at: new Date().toISOString(), summary: current.summary };
+    Object.keys(current.data).forEach(k => { if(current.data[k].ok) all[k] = current.data[k].json; });
+    const blob = new Blob([JSON.stringify(all, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${current.name}-${current.realmSlug}-${region()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+}
+
+/* =======================================================================
+   RENDER: SECTIONS
+   ======================================================================= */
+function renderEquipment(d){
+  const items = (d.equipped_items || []).slice().sort((a, b) => {
+    const ai = SLOT_ORDER.indexOf(a.slot && a.slot.type), bi = SLOT_ORDER.indexOf(b.slot && b.slot.type);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+  if(!items.length) return '<p class="na">No equipped items.</p>';
+  let html = '<div class="gear">' + items.map((it, i) => {
+    const q = (it.quality && it.quality.type) || 'COMMON';
+    const lines = [];
+    if(it.name_description) lines.push(`<li class="green">${esc(nameOf(it.name_description))}</li>`);
+    if(it.binding) lines.push(`<li>${esc(nameOf(it.binding))}</li>`);
+    if(it.unique_equipped) lines.push(`<li>${esc(nameOf(it.unique_equipped))}</li>`);
+    const typeLine = [nameOf(it.inventory_type), nameOf(it.item_subclass)].filter(Boolean).join(' · ');
+    if(typeLine) lines.push(`<li class="muted">${esc(typeLine)}</li>`);
+    if(it.weapon){
+      const w = it.weapon;
+      if(w.damage) lines.push(`<li>${esc(nameOf(w.damage))}</li>`);
+      if(w.attack_speed) lines.push(`<li class="muted">${esc(nameOf(w.attack_speed))}</li>`);
+      if(w.dps) lines.push(`<li class="muted">${esc(nameOf(w.dps))}</li>`);
+    }
+    if(it.armor) lines.push(`<li>${esc(nameOf(it.armor.display) || nameOf(it.armor) || it.armor.value + ' Armor')}</li>`);
+    (it.stats || []).forEach(st => {
+      const txt = nameOf(st.display) || `+${st.value} ${nameOf(st.type)}`;
+      const isGreen = st.display && st.display.color && st.display.color.g > 200 && st.display.color.r < 100;
+      lines.push(`<li class="${st.is_negated ? 'muted' : (isGreen ? 'green' : '')}">${esc(txt)}</li>`);
+    });
+    (it.enchantments || []).forEach(en => lines.push(`<li class="ench">${esc(en.display_string || nameOf(en.source_item) || 'Enchanted')}</li>`));
+    (it.sockets || []).forEach(so => lines.push(`<li class="socket">◆ ${esc(so.display_string || nameOf(so.item) || (nameOf(so.socket_type) + ' Socket'))}</li>`));
+    (it.spells || []).forEach(sp => lines.push(`<li class="green">${esc(sp.description || nameOf(sp.spell))}</li>`));
+    if(it.set){
+      const set = it.set;
+      lines.push(`<li class="set">${esc(nameOf(set.display_string ? set : set.item_set))}</li>`);
+      (set.effects || []).forEach(ef => lines.push(`<li class="set${ef.is_active ? '' : ' off'}"><span class="${ef.is_active ? '' : 'off'}">${esc(ef.display_string)}</span></li>`));
+    }
+    if(it.requirements){
+      const r = it.requirements;
+      [r.level, r.playable_classes, r.skill, r.reputation].forEach(x => { if(x && nameOf(x)) lines.push(`<li class="muted">${esc(nameOf(x))}</li>`); });
+    }
+    if(it.durability) lines.push(`<li class="muted">${esc(nameOf(it.durability))}</li>`);
+    if(it.transmog) lines.push(`<li style="color:#ff80ff">${esc(nameOf(it.transmog))}</li>`);
+    if(it.description) lines.push(`<li class="flav">"${esc(it.description)}"</li>`);
+    const itemId = it.item && it.item.id;
+    return `<div class="item">
+      <div class="icon b-${esc(q)}" data-icon="${i}" title="Item ${esc(itemId || '')}"></div>
+      <div>
+        <div class="slot">${esc(nameOf(it.slot))}</div>
+        <div class="iname q-${esc(q)}">${esc(it.name || ('Item #' + itemId))}</div>
+        ${it.level ? `<div class="ilvl">${esc(nameOf(it.level) || ('Item Level ' + it.level.value))}</div>` : ''}
+        <ul>${lines.join('')}</ul>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+  if(d.equipped_item_sets && d.equipped_item_sets.length){
+    html += `<div class="sub-h">Equipped sets</div><div class="chips">${d.equipped_item_sets.map(s => `<span>${esc(nameOf(s.display_string ? s : s.item_set))}</span>`).join('')}</div>`;
+  }
+  current._sortedItems = items;
+  return html;
+}
+
+async function loadItemIcons(){
+  const items = current && current._sortedItems;
+  if(!items) return;
+  await pool(items.map((it, i) => ({ it, i })), 6, async ({ it, i }) => {
+    const href = it.media && it.media.key && it.media.key.href;
+    if(!href) return;
+    const res = await api(href);
+    const icon = res.ok && res.json && (res.json.assets || []).find(a => a.key === 'icon');
+    const url = icon && safeUrl(icon.value);
+    const node = el.results.querySelector(`[data-icon="${i}"]`);
+    if(url && node) node.style.backgroundImage = `url("${url.replace(/"/g, '')}")`;
+  });
+}
+
+function statValue(v){
+  if(v == null) return null;
+  if(typeof v === 'number') return Number.isInteger(v) ? fmtNum(v) : v.toFixed(2);
+  if(typeof v !== 'object') return esc(v);
+  if('effective' in v) return fmtNum(v.effective) + (v.base != null && v.base !== v.effective ? ` <span style="color:var(--sepia);font-size:12px">(base ${fmtNum(v.base)})</span>` : '');
+  if('value' in v && typeof v.value === 'number'){
+    let s = v.value.toFixed(2) + '%';
+    if(v.rating != null) s += ` <span style="color:var(--sepia);font-size:12px">(${fmtNum(v.rating)} rating)</span>`;
+    return s;
+  }
+  const n = nameOf(v); if(n) return esc(n);
+  return null;
+}
+function renderStats(d){
+  const rows = [];
+  for(const [k, v] of Object.entries(d)){
+    if(k === '_links' || k === 'character') continue;
+    const sv = statValue(v);
+    if(sv != null) rows.push(`<div class="fact"><div class="k">${esc(labelize(k))}</div><div class="v">${sv}</div></div>`);
+  }
+  return rows.length ? `<div class="kv">${rows.join('')}</div>` : renderGenericSection(d);
+}
+
+function talentCard(name, rank, desc){
+  return `<div class="talent">${rank != null ? `<span class="tr">${esc(rank)}</span>` : ''}<div class="tn">${esc(name)}</div>${desc ? `<div class="td">${esc(desc)}</div>` : ''}</div>`;
+}
+let codeSeq = 0;
+function renderTalents(d){
+  let html = '';
+  // Classic-style: specialization_groups -> specializations -> talents
+  if(Array.isArray(d.specialization_groups)){
+    d.specialization_groups.forEach((g, gi) => {
+      html += `<div class="sub-h">Talent group ${gi + 1}${g.is_active ? ' <span class="pill">active</span>' : ''}</div>`;
+      (g.specializations || []).forEach(sp => {
+        html += `<div class="spec-card"><h4>${esc(sp.specialization_name || nameOf(sp.specialization) || 'Tree')} <span style="color:var(--sepia);font-size:13px">${sp.spent_points != null ? sp.spent_points + ' points' : ''}</span></h4>`;
+        html += `<div class="talents">${(sp.talents || []).map(t => talentCard(
+          (t.spell_tooltip && t.spell_tooltip.spell && nameOf(t.spell_tooltip.spell)) || nameOf(t.talent) || ('Talent #' + (t.talent && t.talent.id)),
+          t.talent_rank != null ? 'Rank ' + t.talent_rank : null,
+          t.spell_tooltip && t.spell_tooltip.description)).join('') || '<p class="na">No talents</p>'}</div></div>`;
+      });
+      if(g.glyphs && g.glyphs.length) html += `<div class="sub-h">Glyphs</div><div class="chips">${g.glyphs.map(x => `<span>${esc(nameOf(x))}</span>`).join('')}</div>`;
+    });
+    return html;
+  }
+  // Retail-style: specializations -> loadouts
+  if(Array.isArray(d.specializations)){
+    const activeId = d.active_specialization && d.active_specialization.id;
+    d.specializations.forEach(sp => {
+      const isActive = sp.specialization && sp.specialization.id === activeId;
+      html += `<div class="spec-card"><h4>${esc(nameOf(sp.specialization))}${isActive ? '<span class="pill">active</span>' : ''}</h4>`;
+      (sp.loadouts || []).forEach(lo => {
+        if(lo.talent_loadout_code){
+          const id = 'lc' + (codeSeq++);
+          html += `<div class="loadout-code"><input type="text" readonly id="${id}" value="${esc(lo.talent_loadout_code)}"><button class="ghost" type="button" data-copy="${id}">Copy loadout</button></div>`;
+        }
+        [['Class talents', lo.selected_class_talents], ['Spec talents', lo.selected_spec_talents], ['Hero talents', lo.selected_hero_talents]].forEach(([lbl, arr]) => {
+          if(!arr || !arr.length) return;
+          html += `<div class="sub-h">${lbl}${lo.is_active ? '' : ' (inactive loadout)'}</div><div class="talents">${arr.map(t => talentCard(
+            (t.tooltip && t.tooltip.talent && nameOf(t.tooltip.talent)) || nameOf(t.talent) || ('Talent #' + t.id),
+            t.rank != null ? 'Rank ' + t.rank : null,
+            t.tooltip && t.tooltip.spell_tooltip && t.tooltip.spell_tooltip.description)).join('')}</div>`;
+        });
+      });
+      if(sp.talents && sp.talents.length){
+        html += `<div class="talents">${sp.talents.map(t => talentCard(nameOf(t.talent) || (t.spell_tooltip && nameOf(t.spell_tooltip.spell)) || 'Talent', null, t.spell_tooltip && t.spell_tooltip.description)).join('')}</div>`;
+      }
+      if(sp.pvp_talent_slots && sp.pvp_talent_slots.length){
+        html += `<div class="sub-h">PvP talents</div><div class="talents">${sp.pvp_talent_slots.map(p => {
+          const t = p.selected || {};
+          return talentCard((t.talent && nameOf(t.talent)) || 'PvP talent', null, t.spell_tooltip && t.spell_tooltip.description);
+        }).join('')}</div>`;
+      }
+      html += `</div>`;
+    });
+    return html || renderGenericSection(d);
+  }
+  return renderGenericSection(d);
+}
+
+function bar(label, val, max, extra){
+  const pct = max ? Math.max(0, Math.min(100, (val / max) * 100)) : 0;
+  return `<div class="barrow"><span class="lbl">${label}</span><span class="val">${extra != null ? extra : `${fmtNum(val)} / ${fmtNum(max)}`}</span>
+    <div class="track"><div class="${pct >= 100 ? 'done' : ''}" style="width:${pct}%"></div></div></div>`;
+}
+
+function renderProfessions(d){
+  let html = '';
+  [['Primary', d.primaries], ['Secondary', d.secondaries], ['Archaeology', d.archaeology ? [d.archaeology] : null]].forEach(([lbl, list]) => {
+    if(!list || !list.length) return;
+    html += `<div class="sub-h">${lbl}</div><div class="bars">`;
+    list.forEach(p => {
+      const pname = nameOf(p.profession) || 'Profession';
+      if(p.tiers && p.tiers.length){
+        p.tiers.forEach(t => {
+          html += bar(`${esc(pname)} · ${esc(nameOf(t.tier))}${t.known_recipes ? ` <span style="color:var(--sepia)">(${t.known_recipes.length} recipes)</span>` : ''}`, t.skill_points, t.max_skill_points);
+        });
+      } else if(p.skill_points != null){
+        html += bar(`${esc(pname)}${p.known_recipes ? ` <span style="color:var(--sepia)">(${p.known_recipes.length} recipes)</span>` : ''}`, p.skill_points, p.max_skill_points);
+      } else {
+        html += `<div class="barrow"><span class="lbl">${esc(pname)}</span></div>`;
+      }
+    });
+    html += '</div>';
+    list.forEach(p => {
+      const recipes = [].concat(...(p.tiers || [p]).map(t => t.known_recipes || []));
+      if(recipes.length) html += `<details class="box"><summary>${esc(nameOf(p.profession))} recipes (${recipes.length})</summary><div class="inner"><div class="chips">${recipes.map(r => `<span>${esc(nameOf(r))}</span>`).join('')}</div></div></details>`;
+    });
+  });
+  return html || renderGenericSection(d);
+}
+
+function renderReputations(d){
+  const reps = d.reputations || [];
+  if(!reps.length) return renderGenericSection(d);
+  return `<div class="bars">${reps.map(r => {
+    const st = r.standing || {};
+    const extra = `${esc(st.name || '')}${st.max ? ` · ${fmtNum(st.value)} / ${fmtNum(st.max)}` : ''}`;
+    return bar(esc(nameOf(r.faction)), st.value || 0, st.max || 0, extra);
+  }).join('')}</div>`;
+}
+
+function renderEncounters(d){
+  const exps = d.expansions || [];
+  if(!exps.length) return '<p class="na">No progress recorded yet.</p>';
+  let html = '';
+  exps.forEach(ex => {
+    html += `<div class="sub-h">${esc(nameOf(ex.expansion) || 'Instances')}</div>`;
+    (ex.instances || []).forEach(inst => {
+      html += `<div class="inst"><h5>${esc(nameOf(inst.instance))}</h5><div class="bars">`;
+      (inst.modes || []).forEach(m => {
+        const p = m.progress || {};
+        html += bar(`${esc(nameOf(m.difficulty))}${m.status ? ` <span style="color:var(--sepia)">· ${esc(nameOf(m.status))}</span>` : ''}`, p.completed_count || 0, p.total_count || 0);
+        const encs = (p.encounters || []).map(e => `${esc(nameOf(e.encounter))} ×${e.completed_count}${e.last_kill_timestamp ? ` (last ${new Date(e.last_kill_timestamp).toLocaleDateString()})` : ''}`);
+        if(encs.length) html += `<div class="enc">${encs.join(' · ')}</div>`;
+      });
+      html += '</div></div>';
+    });
+  });
+  return html;
+}
+
+function renderAchievements(d){
+  let html = `<div class="kv">
+    ${d.total_quantity != null ? `<div class="fact"><div class="k">Achievements</div><div class="v big">${fmtNum(d.total_quantity)}</div></div>` : ''}
+    ${d.total_points != null ? `<div class="fact"><div class="k">Points</div><div class="v big">${fmtNum(d.total_points)}</div></div>` : ''}
+  </div>`;
+  if(d.category_progress && d.category_progress.length){
+    html += `<div class="sub-h">By category</div><div class="scroll-x"><table class="table"><thead><tr><th>Category</th><th>Earned</th><th>Points</th></tr></thead><tbody>
+      ${d.category_progress.map(c => `<tr><td>${esc(nameOf(c.category))}</td><td>${fmtNum(c.quantity)}</td><td>${fmtNum(c.points)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  if(d.recent_events && d.recent_events.length){
+    html += `<div class="sub-h">Recently earned</div><div class="scroll-x"><table class="table"><tbody>
+      ${d.recent_events.map(e => `<tr><td>${esc(nameOf(e.achievement))}</td><td style="color:var(--sepia)">${e.timestamp ? esc(fmtDate(e.timestamp)) : ''}</td></tr>`).join('')}
+    </tbody></table></div>`;
+  }
+  const done = (d.achievements || []).filter(a => a.completed_timestamp || (a.criteria && a.criteria.is_completed));
+  if(done.length){
+    html += `<details class="box"><summary>All completed achievements (${done.length})</summary><div class="inner"><div class="chips">
+      ${done.map(a => `<span>${esc(nameOf(a.achievement))}</span>`).join('')}</div></div></details>`;
+  }
+  return html;
+}
+
+function renderAchStats(d){
+  const cats = d.categories || [];
+  if(!cats.length) return renderGenericSection(d);
+  return cats.map(c => {
+    const stats = [...(c.statistics || []), ...[].concat(...(c.sub_categories || []).map(sc => sc.statistics || []))];
+    if(!stats.length) return '';
+    return `<details class="box"><summary>${esc(nameOf(c))} (${stats.length})</summary><div class="inner"><div class="scroll-x"><table class="table"><tbody>
+      ${stats.map(s => `<tr><td>${esc(s.name)}</td><td style="text-align:right;font-family:'JetBrains Mono',monospace">${esc(s.description || fmtNum(s.quantity))}</td></tr>`).join('')}
+    </tbody></table></div></div></details>`;
+  }).join('');
+}
+
+function renderTitles(d){
+  let html = '';
+  if(d.active_title) html += `<p>Active: <strong style="color:var(--gold-bright)">${esc(nameOf(d.active_title))}</strong></p>`;
+  html += renderNameList(d.titles, t => nameOf(t));
+  return html;
+}
+
+function renderNameList(list, fn){
+  if(!Array.isArray(list) || !list.length) return '<p class="na">None.</p>';
+  const names = list.map(fn).filter(Boolean).sort((a, b) => String(a).localeCompare(String(b)));
+  const LIMIT = 400;
+  return `<div class="chips">${names.slice(0, LIMIT).map(n => `<span>${esc(n)}</span>`).join('')}</div>` +
+    (names.length > LIMIT ? `<p class="more">…and ${fmtNum(names.length - LIMIT)} more (see Raw JSON).</p>` : '');
+}
+
+/* Generic renderer: shows any JSON in a readable way, so nothing Blizzard returns is hidden. */
+function renderGenericSection(d){
+  const html = renderTree(d, 0);
+  return html ? `<div class="tree">${html}</div>` : '<p class="na">No data.</p>';
+}
+function renderTree(v, depth){
+  if(v == null) return '';
+  if(typeof v !== 'object'){
+    return esc(typeof v === 'number' ? v.toLocaleString() : v);
+  }
+  if(Array.isArray(v)){
+    if(!v.length) return '<span class="na">none</span>';
+    const simple = v.map(x => (x && typeof x === 'object') ? simpleName(x) : String(x));
+    if(simple.every(Boolean)){
+      return `<div class="chips">${simple.slice(0, 300).map(s => `<span>${esc(s)}</span>`).join('')}</div>${simple.length > 300 ? `<p class="more">…${simple.length - 300} more</p>` : ''}`;
+    }
+    const shown = v.slice(0, 60).map(x => `<div class="el">${renderTree(x, depth + 1)}</div>`).join('');
+    return `<div class="arr">${shown}</div>${v.length > 60 ? `<p class="more">…${v.length - 60} more (see Raw JSON)</p>` : ''}`;
+  }
+  const s = simpleName(v);
+  if(s && depth > 0) return esc(s);
+  const rows = [];
+  for(const [k, val] of Object.entries(v)){
+    if(k === '_links' || k === 'character' || k === 'key' || k === 'href' || k === 'id' && depth > 0) continue;
+    let inner;
+    if(/timestamp$/.test(k) && typeof val === 'number') inner = esc(fmtDate(val));
+    else inner = renderTree(val, depth + 1);
+    if(inner === '') continue;
+    rows.push(`<dt>${esc(labelize(k))}</dt><dd>${inner}</dd>`);
+  }
+  return rows.length ? `<dl>${rows.join('')}</dl>` : '';
+}
+function simpleName(o){
+  const keys = Object.keys(o).filter(k => k !== 'key' && k !== 'id' && k !== '_links');
+  if(keys.length === 1 && (keys[0] === 'name' || keys[0] === 'display_string')) return nameOf(o);
+  if(keys.length === 2 && keys.includes('type') && keys.includes('name')) return nameOf(o);
+  return '';
+}
+
+/* =======================================================================
+   RECENT SEARCHES + DEEP LINKS
+   ======================================================================= */
+function getRecent(){ try{ return JSON.parse(sGet('localStorage','ll_recent') || '[]'); }catch(e){ return []; } }
+function addRecent(r){
+  const list = getRecent().filter(x => !(x.region === r.region && x.realm === r.realm && x.name.toLowerCase() === r.name.toLowerCase()));
+  list.unshift(r);
+  sSet('localStorage','ll_recent', JSON.stringify(list.slice(0, 8)));
+  renderRecent();
+}
+function renderRecent(){
+  const list = getRecent();
+  el.recent.innerHTML = list.map((r, i) => `<button type="button" data-i="${i}">${esc(r.label)}</button>`).join('');
+  el.recent.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const r = list[+b.dataset.i];
+    lookupDirect(r.region, r.realm, r.name);
+  }));
+}
+async function lookupDirect(reg, realm, name){
+  el.region.value = reg;
+  el.name.value = name;
+  el.realmSlug.value = '';
+  if(![...el.realm.options].some(o => o.value === realm)){
+    const o = document.createElement('option'); o.value = realm; o.textContent = realm; el.realm.appendChild(o);
+  }
+  el.realm.value = realm;
+  updateNsMeta();
+  if(!hasCreds()){ el.credsBox.open = true; setStatus('Add your Blizzard API credentials to load this character.', 'info'); return; }
+  await search();
+}
+function fromHash(){
+  const parts = location.hash.replace(/^#/, '').split('/');
+  if(parts.length === 3 && ['us','eu','kr','tw'].includes(parts[0]) && parts[1] && parts[2]){
+    if(current && current.realmSlug === parts[1] && current.name.toLowerCase() === decodeURIComponent(parts[2])) return;
+    lookupDirect(parts[0], parts[1], decodeURIComponent(parts[2]));
+  }
+}
+
+/* =======================================================================
+   WIRING
+   ======================================================================= */
+function loadNs(){
+  try{
+    const s = JSON.parse(sGet('localStorage','ll_ns') || '{}');
+    el.nsProfile.value = s.profile || DEFAULT_NS.profile;
+    el.nsDynamic.value = s.dynamic || DEFAULT_NS.dynamic;
+    if(s.locale) el.locale.value = s.locale;
+    if(s.region) el.region.value = s.region;
+  }catch(e){ el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; }
+  updateNsMeta();
+}
+function saveNs(){
+  sSet('localStorage','ll_ns', JSON.stringify({ profile: el.nsProfile.value.trim(), dynamic: el.nsDynamic.value.trim(), locale: el.locale.value, region: el.region.value }));
+  updateNsMeta();
+}
+
+el.form.addEventListener('submit', e => { e.preventDefault(); search(); });
+[el.clientId, el.clientSecret, el.manualToken].forEach(i => i.addEventListener('input', () => { tokenCache = null; refreshCredState(); }));
+el.remember.addEventListener('change', saveCreds);
+[el.nsProfile, el.nsDynamic].forEach(i => i.addEventListener('change', () => { realmCache = {}; saveNs(); }));
+el.locale.addEventListener('change', saveNs);
+el.region.addEventListener('change', () => {
+  saveNs();
+  el.realm.innerHTML = '<option value="">Auto-detect (search all)</option>';
+  if(hasCreds()) loadRealms().catch(() => {});
 });
+el.resetNsBtn.addEventListener('click', () => {
+  el.nsProfile.value = DEFAULT_NS.profile; el.nsDynamic.value = DEFAULT_NS.dynamic; realmCache = {}; saveNs();
+});
+el.testBtn.addEventListener('click', async () => {
+  saveCreds();
+  setStatus('<span class="spinner"></span>Connecting to Blizzard…');
+  try{
+    realmCache[region()] = null;
+    const realms = await loadRealms();
+    setStatus(`Connected. Found ${realms.length} WoW: Forever realm${realms.length === 1 ? '' : 's'} in ${region().toUpperCase()}.`, 'success');
+  }catch(e){ setStatus(e.message, 'error'); }
+});
+el.forgetBtn.addEventListener('click', () => {
+  ['ll_creds','ll_token','ll_manual_token'].forEach(k => { sDel('sessionStorage', k); sDel('localStorage', k); });
+  el.clientId.value = el.clientSecret.value = el.manualToken.value = ''; el.remember.checked = false;
+  tokenCache = null; refreshCredState();
+  setStatus('Credentials cleared from this browser.', 'info');
+});
+window.addEventListener('hashchange', fromHash);
+
+loadNs();
+loadCreds();
+renderRecent();
+if(!hasCreds()) el.credsBox.open = true;
+if(location.hash.length > 1) fromHash();
+else if(hasCreds()) loadRealms().catch(() => {});
 </script>
 </body>
 </html>
