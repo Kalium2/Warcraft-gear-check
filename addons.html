@@ -169,6 +169,21 @@ footer a{color:var(--ash);}
 .news::after{content:"→";color:var(--gold-hi);transition:transform .25s var(--ease);}
 .news:hover::after{transform:translateX(3px);}
 @media (max-width:480px){ .tabs a{padding:12px 14px 13px;} .news{font-size:12.5px;} }
+
+/* release notes */
+.dl-meta a{color:var(--ash);}
+.dl-meta a:hover{color:var(--gold-hi);}
+#release-notes{scroll-margin-top:24px;}
+.rel-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 6px;}
+.rel-ver{font-family:var(--display);font-weight:600;font-size:30px;line-height:1;color:var(--bone);}
+.rel-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#1a1408;background:var(--gold);padding:3px 7px 2px;}
+.rel-date{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+.rel h3{margin:22px 0 4px;font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);}
+.rel ul{list-style:none;margin:0;padding:0;}
+.rel li{position:relative;padding:8px 0 8px 20px;border-top:1px solid var(--line);font-size:14.5px;}
+.rel li:first-child{border-top:0;}
+.rel li::before{content:"";position:absolute;left:2px;top:16px;width:5px;height:5px;transform:rotate(45deg);background:var(--gold-lo);}
+.rel li b{color:var(--bone);font-weight:500;}
 </style>
 </head>
 <body>
@@ -202,7 +217,7 @@ footer a{color:var(--ash);}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 1.5v9M4 7l4 4 4-4M2 14.5h12"/></svg>
       Download AutoFisher
     </a>
-    <span class="dl-meta">Version 1.0.0 · zip · 5 KB</span>
+    <span class="dl-meta">Version 1.0.0 · zip · 6 KB · <a href="#release-notes">Release notes</a></span>
   </div>
 </section>
 
@@ -280,6 +295,40 @@ footer a{color:var(--ash);}
       </div>
     </section>
   </div>
+
+  <section class="panel" id="release-notes" style="margin-top:22px">
+    <div class="panel-head"><h2>Release notes</h2></div>
+    <div class="panel-body rel">
+      <div class="rel-head">
+        <span class="rel-ver">1.0.0</span><span class="rel-tag">Latest</span><span class="rel-date">7 November 2026 · first release</span>
+      </div>
+
+      <h3>New</h3>
+      <ul>
+        <li><b>One-key fishing.</b> Type <code>/af</code> to turn on fishing mode. Your key (F by default) casts. While your line is in the water, the same key reels in the bobber.</li>
+        <li><b>Loud splash.</b> While you fish, music, ambience and dialog are muted and sound effects play at full volume.</li>
+        <li><b>Auto loot.</b> Auto loot is turned on while you fish.</li>
+        <li><b>Catch log.</b> <code>/af stats</code> shows what you've caught this session and in total. <code>/af reset</code> clears it.</li>
+        <li><b>Your own key.</b> <code>/af key G</code> sets any key, including <code>SHIFT-F</code> or a mouse button like <code>BUTTON4</code>.</li>
+        <li><b>On-screen hint.</b> A line near the top of the screen tells you what your key does right now.</li>
+      </ul>
+
+      <h3>Safety</h3>
+      <ul>
+        <li>Every setting AutoFisher changes is put back when you stop or log out. If the game closes unexpectedly, it puts them back on your next login.</li>
+        <li>Your key is only taken over while fishing mode is on. Turn it off and your normal binding comes back.</li>
+        <li>If combat interrupts you, the key goes back to casting once the fight ends.</li>
+        <li>AutoFisher never casts or loots on its own. Every cast and every catch is one press of your key.</li>
+      </ul>
+
+      <h3>Known limitations</h3>
+      <ul>
+        <li>On older clients (such as 3.3.5 servers), the key casts and you right-click the bobber to reel in.</li>
+        <li>The game may list AutoFisher as "out of date". Tick <b>Load out of date AddOns</b> in the AddOns list.</li>
+        <li>If pressing your key on the splash doesn't reel in, right-clicking the bobber always works.</li>
+      </ul>
+    </div>
+  </section>
 
   <footer>
     <a class="brand" href="./" aria-label="Loot Ledger home">
