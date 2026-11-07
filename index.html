@@ -827,6 +827,23 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
   .reveal{opacity:1;transform:none;}
   html{scroll-behavior:auto;}
 }
+
+/* site tabs (shared with addons.html) */
+.tabs{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 var(--gutter);}
+.tabs-in{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
+.tabs-in::-webkit-scrollbar{display:none;}
+.tabs a{position:relative;display:inline-flex;align-items:center;gap:9px;padding:12px 18px 13px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);text-decoration:none;white-space:nowrap;transition:color .2s;}
+.tabs a::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .3s var(--ease);}
+.tabs a:hover{color:var(--gold-hi);}
+.tabs a[aria-current="page"]{color:var(--gold-hi);}
+.tabs a[aria-current="page"]::after{transform:scaleX(1);}
+.tabs a .new{font-size:9px;letter-spacing:.14em;color:#1a1408;background:var(--gold);padding:2px 6px 1px;}
+.news{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding:7px 16px;border:1px solid var(--line-2);background:rgba(217,180,95,.05);color:var(--ash);text-decoration:none;font-size:13.5px;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%);transition:border-color .2s,color .2s;}
+.news b{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);}
+.news:hover{color:var(--bone);border-color:var(--gold-lo);}
+.news::after{content:"→";color:var(--gold-hi);transition:transform .25s var(--ease);}
+.news:hover::after{transform:translateX(3px);}
+@media (max-width:480px){ .tabs a{padding:12px 14px 13px;} .news{font-size:12.5px;} }
 </style>
 </head>
 <body>
@@ -846,10 +863,14 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
     <span class="brand-name">Loot Ledger<span>Forever Armory</span></span>
   </a>
   <div class="top-right">
-  <nav class="topnav" aria-label="Site"><a href="#results" data-sample>Sample character</a><a href="addons.html">Addons</a></nav>
+  <nav class="topnav" aria-label="Site"><a href="#results" data-sample>Sample character</a></nav>
   <span class="api-state" id="apiState" data-state="checking" title="Whether Blizzard is serving WoW: Forever data right now"><i></i><b id="apiStateText" style="font-weight:400">Checking API</b></span>
   </div>
 </header>
+<nav class="tabs" aria-label="Site sections"><div class="tabs-in">
+  <a href="./" aria-current="page">Armory</a>
+  <a href="addons.html">Addons <span class="new">New</span></a>
+</div></nav>
 
 <section class="intro">
   <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
@@ -858,6 +879,7 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
   <p class="eyebrow">World of Warcraft · Forever</p>
   <h1>Every hero, <em>recorded.</em></h1>
   <p class="sub">Search any Forever character and read their full record: gear, stats, talents, professions, reputations, raid progress and more, straight from Blizzard.</p>
+  <a class="news" href="addons.html"><b>New</b> AutoFisher: one-key fishing addon</a>
 </section>
 
 <div class="wrap">
