@@ -18,6 +18,8 @@ A static, single-page site that looks up **World of Warcraft: Forever** characte
 ## Repo layout
 ```
 index.html        The whole site (HTML + CSS + JS, no build step)
+addons.html       AutoFisher addon page (download + how to use), same design tokens
+downloads/        AutoFisher.zip (addon source: Kalium2/blitz, wow-addon/AutoFisher)
 worker/worker.js  Cloudflare Worker: Blizzard API proxy
 wrangler.jsonc    Worker config at the repo root (main = worker/worker.js, no assets)
 README.md         Setup and deploy notes

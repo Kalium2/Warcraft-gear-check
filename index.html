@@ -592,6 +592,7 @@ footer a{color:var(--ash);}
 .top-right{display:flex;align-items:center;gap:18px;min-width:0;}
 .topnav a{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);text-decoration:none;white-space:nowrap;}
 .topnav a:hover{color:var(--gold-hi);}
+.topnav{display:flex;gap:18px;}
 @media (max-width:560px){ .topnav{display:none;} }
 
 /* secondary call to action */
@@ -845,7 +846,7 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
     <span class="brand-name">Loot Ledger<span>Forever Armory</span></span>
   </a>
   <div class="top-right">
-  <nav class="topnav" aria-label="Site"><a href="#results" data-sample>Sample character</a></nav>
+  <nav class="topnav" aria-label="Site"><a href="#results" data-sample>Sample character</a><a href="addons.html">Addons</a></nav>
   <span class="api-state" id="apiState" data-state="checking" title="Whether Blizzard is serving WoW: Forever data right now"><i></i><b id="apiStateText" style="font-weight:400">Checking API</b></span>
   </div>
 </header>
@@ -968,6 +969,7 @@ button.pd-slot:focus-visible{outline:1px solid var(--qc);outline-offset:2px;}
     <p>
       Data from the official <a href="https://develop.battle.net/documentation/world-of-warcraft" target="_blank" rel="noopener">Blizzard Battle.net API</a>. Blizzard hasn't documented WoW: Forever support yet, so some sections may be unavailable.
       Not affiliated with Blizzard Entertainment. World of Warcraft is a trademark of Blizzard Entertainment, Inc.
+      <br>Free addon: <a href="addons.html">AutoFisher</a>, one-key fishing.
     </p>
   </footer>
 </div>
